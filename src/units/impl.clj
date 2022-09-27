@@ -2,7 +2,8 @@
   (:require [units.protocols :as prot]
             [clojure.string :as string]
             [clojure.math :as math])
-  (:import (clojure.lang Keyword)))
+  (:import (clojure.lang Keyword Ratio)
+           (java.io Writer)))
 
 (defn scale [n m] (when (and n m) (* n m)))
 
@@ -15,31 +16,38 @@
          (satisfies? prot/IUnit y)) (= (prot/->measure x) (prot/->measure y))
     :else false))
 
-(defn ex-incompatible-measures! [^Keyword m-x ^Keyword m-y]
-  (ex-info (str "Cannot convert units.") {:from m-x :to m-y}))
-(defn ex-incompatible-units! [x y]
-  (ex-incompatible-measures! (prot/->measure x) (prot/->measure y)))
-
 (defn convert [a b]
   (from-base-number b (to-base-number a)))
 
+(defn print-unit [u]
+  (str "#" (name (prot/->measure u)) "/" (name (prot/->symb u)) "\"" (prot/->number u) "\""))
+
+(defn- parse-ratio [^String s]
+  (let [svec (string/split s #"/")]
+    (when (and (= 2 (count svec)) (every? parse-long svec))
+      (let [[numerator denominator] svec]
+        (new Ratio (biginteger numerator) (biginteger denominator))))))
+
+(defn parse-number [^String s]
+  (or (parse-long s) (parse-ratio s) (parse-double s) (biginteger s)))
 
 ;; Basic Unit
 
 (deftype Unit [measure symb scale-of-base number]
   Object
-  (toString [_] (str number))
+  (toString [this] (print-unit this))
   (hashCode [this] (hash {:measure measure :number (to-base-number this)}))
   (equals [this other]
     (and (instance? Unit other) (same-measure? this other)
-         (or (every? (comp nil? prot/->number) [this other])
+         (or (and (every? (comp nil? prot/->number) [this other])
+                  (= (prot/->symb this) (prot/->symb other)))
              (and (every? (comp some? prot/->number) [this other])
                   (== (to-base-number this) (to-base-number other))))))
 
   Comparable
   (compareTo [this other] (if (same-measure? this other)
                             (- (to-base-number this) (to-base-number other))
-                            (throw (ex-incompatible-units! this other))))
+                            (throw (ex-info "Cannot compare units of different measure." {:x this :y other}))))
 
   prot/IUnit
   (->measure [_] measure)
@@ -48,6 +56,8 @@
   (->scale-of-base [_] scale-of-base)
   (with-num [_ n] (new Unit measure symb scale-of-base n)))
 
+(defmethod print-method Unit [u ^Writer w] (.write w ^String (print-unit u)))
+(defmethod print-dup Unit [u ^Writer w] (.write w ^String (print-unit u)))
 
 ;; Derived Unit
 
@@ -56,10 +66,10 @@
         exp (Math/abs exponent)]
     (if (= 1 exp)
       symb
-      (str symb "^" exp))))
+      (str symb exp))))
 
 (defn- d-symbol-part [unit-seq]
-  (->> (sort-by first unit-seq)
+  (->> (sort-by (comp prot/->symb first) unit-seq)
        (map (partial apply unit-symbol))
        (string/join "-")))
 
@@ -76,18 +86,19 @@
 
 (deftype Derived [measure units symb number]
   Object
-  (toString [_] (str number))
+  (toString [this] (print-unit this))
   (hashCode [this] (hash {:measure measure :number (to-base-number this)}))
   (equals [this other]
     (and (instance? Derived other) (same-measure? this other)
-         (or (every? (comp nil? prot/->number) [this other])
+         (or (and (every? (comp nil? prot/->number) [this other])
+                  (= (prot/->symb this) (prot/->symb other)))
              (and (every? (comp some? prot/->number) [this other])
                   (== (to-base-number this) (to-base-number other))))))
 
   Comparable
   (compareTo [this other] (if (same-measure? this other)
                             (- (to-base-number this) (to-base-number other))
-                            (throw (ex-incompatible-units! this other))))
+                            (throw (ex-info "Cannot compare units of different measure." {:x this :y other}))))
 
   prot/IUnit
   (->measure [_] measure)
@@ -98,25 +109,41 @@
                             (apply *)))
   (with-num [_ n] (new Derived measure units symb n)))
 
-(def registry (atom {}))
+(defmethod print-method Derived [d ^Writer w] (.write w ^String (print-unit d)))
+(defmethod print-dup Derived [d ^Writer w] (.write w ^String (print-unit d)))
 
+(defonce ^:private registry (atom {}))
+
+(defn register-unit! [unit]
+  (swap! registry assoc {(prot/with-num unit nil) 1} (prot/with-num unit nil)))
 (defn register-derived! [derived]
   (swap! registry assoc (.units derived) derived))
 
-(defn units [x]
+(defn- units [x]
   (cond
     (instance? Unit x) {(prot/with-num x nil) 1}
     (instance? Derived x) (.units x)))
 
-(defn derive-units [x y op]
+(defn- derive-units [x y op]
   (let [units-x (units x)
         units-y (if (= / op)
                   (update-vals (units y) -)
                   (units y))]
-    (merge-with + units-x units-y)))
+    (->> (merge-with + units-x units-y)
+         (filter (comp not zero? second))
+         (into {}))))
 
-(defn existing-derived [x y op]
-  (@registry (derive-units x y op)))
+(defn attempt-derivation [x y op]
+  (let [derived (derive-units x y op)
+        num-x (prot/->number x)
+        num-y (prot/->number y)]
+    (cond
+      (empty? derived) (op num-x num-y)
+
+      (@registry derived) (prot/with-num (@registry derived) (op num-x num-y))
+
+      :else (throw (ex-info (str "No derived unit is registered for " (derived-symbol derived))
+                            derived)))))
 
 
 
