@@ -204,7 +204,7 @@
                    (symbol)))]
       (reduce (fn [acc u]
                 (assoc acc (unit-sym->symbol u) (symbol u)))
-              {} unit-syms)))
+              (sorted-map) unit-syms)))
 
   (data-readers unit-syms)
   )

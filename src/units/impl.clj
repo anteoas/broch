@@ -2,7 +2,7 @@
   (:require [units.protocols :as prot]
             [clojure.string :as string]
             [clojure.math :as math])
-  (:import (clojure.lang Keyword Ratio)
+  (:import (clojure.lang Ratio)
            (java.io Writer)))
 
 (defn scale [n m] (when (and n m) (* n m)))
@@ -31,18 +31,25 @@
 (defn parse-number [^String s]
   (or (parse-long s) (parse-ratio s) (parse-double s) (biginteger s)))
 
+(defn- hash-unit [u]
+  (if (prot/->number u)
+    (hash {:measure (prot/->measure u) :number (to-base-number (prot/->number u))})
+    (hash {:measure (prot/->measure u) :symb (prot/->symb u)})))
+
+(defn- equal-units? [u v]
+  (and (= (class u) (class v)) (same-measure? u v)
+       (or (and (every? (comp nil? prot/->number) [u v])
+                (= (prot/->symb u) (prot/->symb v)))
+           (and (every? (comp some? prot/->number) [u v])
+                (== (to-base-number u) (to-base-number v))))))
+
 ;; Basic Unit
 
 (deftype Unit [measure symb scale-of-base number]
   Object
   (toString [this] (print-unit this))
-  (hashCode [this] (hash {:measure measure :number (to-base-number this)}))
-  (equals [this other]
-    (and (instance? Unit other) (same-measure? this other)
-         (or (and (every? (comp nil? prot/->number) [this other])
-                  (= (prot/->symb this) (prot/->symb other)))
-             (and (every? (comp some? prot/->number) [this other])
-                  (== (to-base-number this) (to-base-number other))))))
+  (hashCode [this] (hash-unit this))
+  (equals [this other] (equal-units? this other))
 
   Comparable
   (compareTo [this other] (if (same-measure? this other)
@@ -87,13 +94,8 @@
 (deftype Derived [measure units symb number]
   Object
   (toString [this] (print-unit this))
-  (hashCode [this] (hash {:measure measure :number (to-base-number this)}))
-  (equals [this other]
-    (and (instance? Derived other) (same-measure? this other)
-         (or (and (every? (comp nil? prot/->number) [this other])
-                  (= (prot/->symb this) (prot/->symb other)))
-             (and (every? (comp some? prot/->number) [this other])
-                  (== (to-base-number this) (to-base-number other))))))
+  (hashCode [this] (hash-unit this))
+  (equals [this other] (equal-units? this other))
 
   Comparable
   (compareTo [this other] (if (same-measure? this other)
