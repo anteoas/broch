@@ -6,8 +6,6 @@
             [clojure.string :as string])
   (:import (units.impl Unit)))
 
-(set! *warn-on-reflection* true)
-
 (defn- new-unit [new-u x]
   (cond
     (nil? x)
