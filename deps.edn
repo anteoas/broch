@@ -1,2 +1,9 @@
 {:paths ["src"]
- :deps  {org.clojure/clojure {:mvn/version "1.11.1"}}}
+ :deps  {org.clojure/clojure {:mvn/version "1.11.1"}}
+
+ :aliases
+ {:deploy {:extra-deps {slipset/deps-deploy {:mvn/version "RELEASE"}}
+           :exec-fn    deps-deploy.deps-deploy/deploy
+           :exec-args  {:installer      :remote
+                        :sign-releases? true
+                        :artifact       "deps-deploy.jar"}}}}
