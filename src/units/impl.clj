@@ -1,6 +1,5 @@
 (ns units.impl
-  (:require [clojure.math :as math]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [units.protocols :as prot]))
 
 (defn- scale [n m] (when (and n m) (* n m)))
@@ -19,7 +18,7 @@
 
 (defn- hash-unit [u]
   (if (prot/->number u)
-    (hash {:measure (prot/->measure u) :number (prot/to-base-number (prot/->number u))})
+    (hash {:measure (prot/->measure u) :number (prot/to-base-number u)})
     (hash {:measure (prot/->measure u) :symb (prot/->symb u)})))
 
 (defn- equal-units? [u v]
@@ -46,8 +45,8 @@
   (->measure [_] measure)
   (->number [_] number)
   (->symb [_] symb)
-  (to-base-number [_] (scale (+ number (or trans-of-base 0)) scale-of-base))
-  (from-base-number [this n] (prot/with-num this (+ (scale n (/ 1 scale-of-base)) (or trans-of-base 0))))
+  (to-base-number [_] (scale (+ number trans-of-base) scale-of-base))
+  (from-base-number [this n] (prot/with-num this (+ (scale n (/ 1 scale-of-base)) trans-of-base)))
   (with-num [_ n] (new Unit measure symb scale-of-base trans-of-base n)))
 
 
@@ -75,9 +74,6 @@
       (d-symbol-part numerators)
       (->> (map d-symbol-part [numerators denominators])
            (string/join ":")))))
-
-#_(defn- partial-scale [unit exponential]
-    (math/pow (prot/->scale-of-base unit) exponential))
 
 (deftype Derived [measure units symb number]
   Object
@@ -129,13 +125,12 @@
          (into {}))))
 
 (defn attempt-derivation [x y op]
-  (let [derived (derive-units x y op)
-        num-x (prot/->number x)
-        num-y (prot/->number y)]
+  (let [derived (derive-units x y op)]
     (cond
-      (empty? derived) (op num-x num-y)
+      (empty? derived) (op (prot/->number x) (prot/->number y))
 
-      (@registry derived) (prot/with-num (@registry derived) (op num-x num-y))
+      (@registry derived)
+      (prot/from-base-number (@registry derived) (op (prot/to-base-number x) (prot/to-base-number y)))
 
       :else (throw (ex-info (str "No derived unit is registered for " (derived-symbol derived))
                             derived)))))

@@ -3,7 +3,7 @@
   (:require [units.impl :as impl :refer [->Unit ->Derived]]
             [units.protocols :as prot]
             [units.data-literals])
-  (:import (units.impl Unit Derived)))
+  (:import (units.impl Derived)))
 
 ;; Operations on Units
 
@@ -123,7 +123,7 @@
 
 (defn ->unit
   ([measure symb scale-of-base]
-   (->unit measure symb scale-of-base nil))
+   (->unit measure symb scale-of-base 0))
   ([measure symb scale-of-base trans-of-base]
    (let [unit (->Unit measure symb scale-of-base trans-of-base nil)]
      (impl/register-unit! unit)
@@ -186,7 +186,7 @@
 
 ;; Other SI
 (def amperes (->unit :electric-current :A 1))
-(def mols (->unit :amount-of-substance :mol 1))
+(def moles (->unit :amount-of-substance :mol 1))
 (def candelas (->unit :luminous-intensity :cd 1))
 
 ;; Area
@@ -210,12 +210,12 @@
 ;; Force
 (def newtons (->derived :force {meters 1 seconds -2} :N))
 
-;; Power
-(def watts (->derived :power {kilograms 1 meters 2 seconds -3} :W))
-(def kilowatts (->unit :power :kW 1000))
+;; Power & Energy
+(def kilo (->unit :amount :k 1000))
 
-;; Energy
 (def joules (->derived :energy {kilograms 1 meters 2 seconds -2} :J))
+(def watts (->derived :power {joules 1 seconds -1} :W))
+(def kilowatts (->derived :power {kilo 1 watts 1} :kW))
 (def watt-hours (->derived :energy {watts 1 hours 1} :Wh))
-(def kilowatt-hours (->derived :energy {kilowatts 1 hours 1}))
+(def kilowatt-hours (->derived :energy {kilowatts 1 hours 1} :kWh))
 
