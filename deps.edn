@@ -6,4 +6,7 @@
            :exec-fn    deps-deploy.deps-deploy/deploy
            :exec-args  {:installer      :remote
                         :sign-releases? true
-                        :artifact       "deps-deploy.jar"}}}}
+                        :artifact       "deps-deploy.jar"}}}
+
+ :test
+ {:extra-paths ["test"]}}

@@ -2,59 +2,38 @@
   (:refer-clojure :exclude [* + - / < <= > >=])
   (:require [units.impl :as impl :refer [->Unit ->Derived]]
             [units.protocols :as prot]
-            [units.data-literals])
-  (:import (units.impl Derived)))
+            [units.data-literals]))
 
 ;; Operations on Units
 
 (defn box
   "Call any fn on the number directly. Returns same unit."
-  [f] #(prot/with-num % (f (prot/->number %))))
+  [f]
+  #(prot/with-num % (f (prot/->number %))))
 
-(defn- boxed-arithmetic [x y op]
-  (cond
-    (and (number? x) (number? y))
-    (op x y)
-
-    (and (satisfies? prot/IUnit x) (number? y))
-    ((box #(op % y)) x)
-
-    (and (satisfies? prot/IUnit y) (number? x))
-    ((box #(op % x)) y)
-
-    (= op clojure.core/*)
-    (impl/attempt-derivation x y op)
-
-    (= op clojure.core//)
-    (if (impl/same-measure? x y)
-      (impl/attempt-derivation x (impl/convert y x) op)
-      (impl/attempt-derivation x y op))
-
-    (or (= op clojure.core/+) (= op clojure.core/-))
-    (if (impl/same-measure? x y)
-      (prot/from-base-number x (op (prot/to-base-number x) (prot/to-base-number y)))
-      (throw (ex-info (str "Cannot add/subtract " x " and " y) {:from x :to y})))
-
-    :else (throw (ex-info "Unsupported operation." {:op op :x x :y y}))))
+(defn unit?
+  "Is this a unit?"
+  [x]
+  (impl/unit? x))
 
 (defn +
   ([x] x)
-  ([x y] (boxed-arithmetic x y clojure.core/+))
+  ([x y] (impl/boxed-arithmetic x y clojure.core/+))
   ([x y & more] (reduce + (+ x y) more)))
 
 (defn -
   ([x] ((box clojure.core/-) x))
-  ([x y] (boxed-arithmetic x y clojure.core/-))
+  ([x y] (impl/boxed-arithmetic x y clojure.core/-))
   ([x y & more] (reduce - (- x y) more)))
 
 (defn *
   ([x] x)
-  ([x y] (boxed-arithmetic x y clojure.core/*))
+  ([x y] (impl/boxed-arithmetic x y clojure.core/*))
   ([x y & more] (reduce * (* x y) more)))
 
 (defn /
   ([x] x)
-  ([x y] (boxed-arithmetic x y clojure.core//))
+  ([x y] (impl/boxed-arithmetic x y clojure.core//))
   ([x y & more] (reduce / (/ x y) more)))
 
 (defn <
@@ -99,28 +78,6 @@
 
 ;; Defining units
 
-(defn- new-unit [new-u x]
-  (cond
-    (nil? x)
-    new-u
-
-    (number? x)
-    (prot/with-num new-u x)
-
-    (string? x)
-    (let [n (read-string x)]
-      (if (number? n)
-        (prot/with-num new-u n)
-        (throw (ex-info (str "Can't make units with other things than numbers: " x) {:x x}))))
-
-    (and (satisfies? prot/IUnit x) (impl/same-measure? x new-u))
-    (impl/convert x new-u)
-
-    (and (satisfies? prot/IUnit x) (not (impl/same-measure? x new-u)))
-    (throw (ex-info (str "Cannot convert a " x " into " new-u) {:fomr x :to new-u}))
-
-    :else (throw (ex-info "Unhandled case." {:unit new-u :x x}))))
-
 (defn ->unit
   ([measure symb scale-of-base]
    (->unit measure symb scale-of-base 0))
@@ -129,32 +86,23 @@
      (impl/register-unit! unit)
      (fn
        ([] unit)
-       ([x] (new-unit unit x))))))
-
-(defn ensure-basic [units]
-  (let [units (update-keys units #(if (fn? %) (%) %))]
-    (->> units
-         (reduce (fn [acc [k v]]
-                   (merge-with + acc
-                               (if (instance? Derived k)
-                                 (ensure-basic (update-vals (.units k) #(clojure.core/* % v)))
-                                 {k v})))
-                 {}))))
+       ([x] (impl/new-unit unit x))))))
 
 (defn ->derived
   ([measure units] (->derived measure units nil))
   ([measure units symb]
-   (let [units (ensure-basic units)
+   (let [units (impl/ensure-basic units)
          derived (->Derived measure units symb nil)]
-     (assert (and (every? #(satisfies? prot/IUnit %) (keys units))
+     (assert (and (every? impl/unit? (keys units))
                   (every? int? (vals units))))
      (impl/register-derived! derived)
      (fn
        ([] derived)
-       ([x] (new-unit derived x))))))
+       ([x] (impl/new-unit derived x))))))
 
 
 ;; Units
+(def kilo (->unit :amount :k 1000))
 
 ;; Length
 (def millimeters (->unit :length :mm 1/1000))
@@ -208,12 +156,10 @@
 (def meters-per-second2 (->derived :acceleration {meters 1 seconds -2}))
 
 ;; Force
-(def newtons (->derived :force {meters 1 seconds -2} :N))
+(def newtons (->derived :force {kilograms 1 meters 1 seconds -2} :N))
 
 ;; Power & Energy
-(def kilo (->unit :amount :k 1000))
-
-(def joules (->derived :energy {kilograms 1 meters 2 seconds -2} :J))
+(def joules (->derived :energy {newtons 1 meters 1} :J))
 (def watts (->derived :power {joules 1 seconds -1} :W))
 (def kilowatts (->derived :power {kilo 1 watts 1} :kW))
 (def watt-hours (->derived :energy {watts 1 hours 1} :Wh))

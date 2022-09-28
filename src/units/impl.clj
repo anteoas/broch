@@ -1,17 +1,42 @@
 (ns units.impl
   (:require [clojure.string :as string]
+            [clojure.math :as math]
             [units.protocols :as prot]))
 
 (defn- scale [n m] (when (and n m) (* n m)))
 
+(defn unit? [x] (satisfies? prot/IUnit x))
+
 (defn same-measure? [x y]
   (cond
-    (and (satisfies? prot/IUnit x)
-         (satisfies? prot/IUnit y)) (= (prot/->measure x) (prot/->measure y))
+    (and (unit? x) (unit? y)) (= (prot/->measure x) (prot/->measure y))
+
     :else false))
 
-(defn convert [a b]
+(defn- convert [a b]
   (prot/from-base-number b (prot/to-base-number a)))
+
+(defn new-unit [new-u x]
+  (cond
+    (nil? x)
+    new-u
+
+    (number? x)
+    (prot/with-num new-u x)
+
+    (string? x)
+    (let [n (read-string x)]
+      (if (number? n)
+        (prot/with-num new-u n)
+        (throw (ex-info (str "Can't make units with other things than numbers: " x) {:x x}))))
+
+    (and (unit? x) (same-measure? x new-u))
+    (convert x new-u)
+
+    (and (unit? x) (not (same-measure? x new-u)))
+    (throw (ex-info (str "Cannot convert a " x " into " new-u) {:fomr x :to new-u}))
+
+    :else (throw (ex-info "Unhandled case." {:unit new-u :x x}))))
 
 (defn print-unit [u]
   (str "#" (name (prot/->measure u)) "/" (name (prot/->symb u)) "\"" (prot/->number u) "\""))
@@ -28,6 +53,11 @@
            (and (every? (comp some? prot/->number) [u v])
                 (== (prot/to-base-number u) (prot/to-base-number v))))))
 
+(defn- compare-units [x y]
+  (if (same-measure? x y)
+    (compare (- (prot/to-base-number x) (prot/to-base-number y)) 0)
+    (throw (ex-info "Cannot compare units of different measure." {:x x :y y}))))
+
 ;; Basic Unit
 
 (deftype Unit [measure symb scale-of-base trans-of-base number]
@@ -37,15 +67,13 @@
   (equals [this other] (equal-units? this other))
 
   Comparable
-  (compareTo [this other] (if (same-measure? this other)
-                            (- (prot/to-base-number this) (prot/to-base-number other))
-                            (throw (ex-info "Cannot compare units of different measure." {:x this :y other}))))
+  (compareTo [this other] (compare-units this other))
 
   prot/IUnit
   (->measure [_] measure)
   (->number [_] number)
   (->symb [_] symb)
-  (to-base-number [_] (scale (+ number trans-of-base) scale-of-base))
+  (to-base-number [_] (scale (- number trans-of-base) scale-of-base))
   (from-base-number [this n] (prot/with-num this (+ (scale n (/ 1 scale-of-base)) trans-of-base)))
   (with-num [_ n] (new Unit measure symb scale-of-base trans-of-base n)))
 
@@ -75,6 +103,10 @@
       (->> (map d-symbol-part [numerators denominators])
            (string/join ":")))))
 
+(defn- repeated-numer-denom [units]
+  [(mapcat (fn [[k v]] (repeat v k)) (numerators units))
+   (mapcat (fn [[k v]] (repeat (- v) k)) (denominators units))])
+
 (deftype Derived [measure units symb number]
   Object
   (toString [this] (print-unit this))
@@ -82,25 +114,21 @@
   (equals [this other] (equal-units? this other))
 
   Comparable
-  (compareTo [this other] (if (same-measure? this other)
-                            (- (prot/to-base-number this) (prot/to-base-number other))
-                            (throw (ex-info "Cannot compare units of different measure." {:x this :y other}))))
+  (compareTo [this other] (compare-units this other))
 
   prot/IUnit
   (->measure [_] measure)
   (->number [_] number)
   (->symb [_] (if symb symb (derived-symbol units)))
-  (to-base-number [_] (let [numerators (mapcat (fn [[k v]] (repeat v k)) (numerators units))
-                            denominators (mapcat (fn [[k v]] (repeat (- v) k)) (denominators units))]
+  (to-base-number [_] (let [[numerators denominators] (repeated-numer-denom units)]
                         (as-> number $
                               (reduce (fn [n u] (prot/to-base-number (prot/with-num u n))) $ numerators)
                               (reduce (fn [n u] (prot/->number (prot/from-base-number u n))) $ denominators))))
-  (from-base-number [this n] (let [numerators (mapcat (fn [[k v]] (repeat v k)) (numerators units))
-                                denominators (mapcat (fn [[k v]] (repeat (- v) k)) (denominators units))]
-                            (as-> n $
-                                  (reduce (fn [n u] (prot/->number (prot/from-base-number u n))) $ numerators)
-                                  (reduce (fn [n u] (prot/to-base-number (prot/with-num u n))) $ denominators)
-                                  (prot/with-num this $))))
+  (from-base-number [this n] (let [[numerators denominators] (repeated-numer-denom units)]
+                               (as-> n $
+                                     (reduce (fn [n u] (prot/->number (prot/from-base-number u n))) $ numerators)
+                                     (reduce (fn [n u] (prot/to-base-number (prot/with-num u n))) $ denominators)
+                                     (prot/with-num this $))))
   (with-num [_ n] (new Derived measure units symb n)))
 
 (defonce ^:private registry (atom {}))
@@ -135,6 +163,38 @@
       :else (throw (ex-info (str "No derived unit is registered for " (derived-symbol derived))
                             derived)))))
 
+(defn boxed-arithmetic [x y op]
+  (cond
+    (and (number? x) (number? y))
+    (op x y)
 
+    (and (unit? x) (number? y))
+    (prot/with-num x (op (prot/->number x) y))
 
+    (and (unit? y) (number? x))
+    (prot/with-num y (op (prot/->number y) x))
 
+    (= op *)
+    (attempt-derivation x y op)
+
+    (= op /)
+    (if (same-measure? x y)
+      (attempt-derivation x (convert y x) op)
+      (attempt-derivation x y op))
+
+    (or (= op +) (= op -))
+    (if (same-measure? x y)
+      (prot/from-base-number x (op (prot/to-base-number x) (prot/to-base-number y)))
+      (throw (ex-info (str "Cannot add/subtract " x " and " y) {:from x :to y})))
+
+    :else (throw (ex-info "Unsupported operation." {:op op :x x :y y}))))
+
+(defn ensure-basic [units]
+  (let [units (update-keys units #(if (fn? %) (%) %))]
+    (->> units
+         (reduce (fn [acc [k v]]
+                   (merge-with + acc
+                               (if (instance? Derived k)
+                                 (ensure-basic (update-vals (.units k) #(* % v)))
+                                 {k v})))
+                 {}))))
