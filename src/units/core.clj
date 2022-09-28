@@ -103,7 +103,10 @@
     (prot/with-num new-u x)
 
     (string? x)
-    (prot/with-num new-u (impl/parse-number x))
+    (let [n (read-string x)]
+      (if (number? n)
+        (prot/with-num new-u n)
+        (throw (ex-info (str "Can't make units with other things than numbers: " x) {:x x}))))
 
     (and (satisfies? prot/IUnit x) (impl/same-measure? x new-u))
     (impl/convert x new-u)

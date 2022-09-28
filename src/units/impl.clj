@@ -1,8 +1,7 @@
 (ns units.impl
   (:require [clojure.math :as math]
             [clojure.string :as string]
-            [units.protocols :as prot])
-  (:import (clojure.lang Ratio)))
+            [units.protocols :as prot]))
 
 (defn scale [n m] (when (and n m) (* n m)))
 
@@ -20,15 +19,6 @@
 
 (defn print-unit [u]
   (str "#" (name (prot/->measure u)) "/" (name (prot/->symb u)) "\"" (prot/->number u) "\""))
-
-(defn- parse-ratio [^String s]
-  (let [svec (string/split s #"/")]
-    (when (and (= 2 (count svec)) (every? parse-long svec))
-      (let [[numerator denominator] svec]
-        (new Ratio (biginteger numerator) (biginteger denominator))))))
-
-(defn parse-number [^String s]
-  (or (parse-long s) (parse-ratio s) (parse-double s) (biginteger s)))
 
 (defn- hash-unit [u]
   (if (prot/->number u)
