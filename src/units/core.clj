@@ -3,7 +3,7 @@
   (:require [units.impl :as impl :refer [->Unit ->Derived]]
             [units.protocols :as prot]
             [units.data-literals])
-  (:import (units.impl Unit)))
+  (:import (units.impl Unit Derived)))
 
 ;; Operations on Units
 
@@ -22,8 +22,13 @@
     (and (satisfies? prot/IUnit y) (number? x))
     ((box #(op % x)) y)
 
-    (or (= op clojure.core/*) (= op clojure.core//))
+    (= op clojure.core/*)
     (impl/attempt-derivation x y op)
+
+    (= op clojure.core//)
+    (if (impl/same-measure? x y)
+      (impl/attempt-derivation x (impl/convert y x) op)
+      (impl/attempt-derivation x y op))
 
     (or (= op clojure.core/+) (= op clojure.core/-))
     (if (impl/same-measure? x y)
@@ -123,12 +128,22 @@
       ([] unit)
       ([x] (new-unit unit x)))))
 
+(defn ensure-basic [units]
+  (let [units (update-keys units #(if (fn? %) (%) %))]
+    (->> units
+         (reduce (fn [acc [k v]]
+                   (merge-with + acc
+                               (if (instance? Derived k)
+                                 (ensure-basic (update-vals (.units k) #(clojure.core/* % v)))
+                                 {k v})))
+                 {}))))
+
 (defn ->derived
   ([measure units] (->derived measure units nil))
   ([measure units symb]
-   (let [units (update-keys units #(if (fn? %) (%) %))
+   (let [units (ensure-basic units)
          derived (->Derived measure units symb nil)]
-     (assert (and (every? #(instance? Unit %) (keys units))
+     (assert (and (every? #(satisfies? prot/IUnit %) (keys units))
                   (every? int? (vals units))))
      (impl/register-derived! derived)
      (fn
@@ -187,4 +202,13 @@
 
 ;; Force
 (def newtons (->derived :force {meters 1 seconds -2} :N))
+
+;; Power
+(def watts (->derived :power {kilograms 1 meters 2 seconds -3} :W))
+(def kilowatts (->unit :power :kW 1000))
+
+;; Energy
+(def joules (->derived :energy {kilograms 1 meters 2 seconds -2} :J))
+(def watt-hours (->derived :energy {watts 1 hours 1} :Wh))
+(def kilowatt-hours (->derived :energy {kilowatts 1 hours 1}))
 
