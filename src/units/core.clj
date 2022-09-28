@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [* + - / < <= > >=])
   (:require [units.impl :as impl :refer [->Unit ->Derived]]
             [units.protocols :as prot]
-            [clojure.string :as string])
+            [units.data-literals])
   (:import (units.impl Unit)))
 
 ;; Operations on Units
@@ -185,26 +185,3 @@
 ;; Force
 (def newtons (->derived :force {meters 1 seconds -2} :N))
 
-
-(comment
-  ; Generate data-readers map
-
-  (def unit-syms [#'millimeters #'centimeters #'meters #'kilometers #'nautical-miles #'miles #'yards #'feet #'inches
-                  #'seconds #'minutes #'hours #'grams #'kilograms #'tonnes #'amperes #'kelvins #'mols #'candelas
-                  #'kilometers #'meters #'miles #'meters #'newtons #'kilometers-per-hour #'meters-per-second
-                  #'miles-per-hour #'meters-per-second2 #'squared-millimeters #'squared-centimeters #'squared-meters
-                  #'squared-kilometers #'squared-miles #'squared-yards #'squared-feet #'squared-inches])
-
-  (defn data-readers [unit-syms]
-    (letfn [(unit-sym->symbol [u]
-              (->> (str (u))
-                   (drop-last 2)
-                   (drop 1)
-                   (string/join)
-                   (symbol)))]
-      (reduce (fn [acc u]
-                (assoc acc (unit-sym->symbol u) (symbol u)))
-              (sorted-map) unit-syms)))
-
-  (data-readers unit-syms)
-  )

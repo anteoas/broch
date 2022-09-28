@@ -1,9 +1,8 @@
 (ns units.impl
-  (:require [units.protocols :as prot]
+  (:require [clojure.math :as math]
             [clojure.string :as string]
-            [clojure.math :as math])
-  (:import (clojure.lang Ratio)
-           (java.io Writer)))
+            [units.protocols :as prot])
+  (:import (clojure.lang Ratio)))
 
 (defn scale [n m] (when (and n m) (* n m)))
 
@@ -63,8 +62,6 @@
   (->scale-of-base [_] scale-of-base)
   (with-num [_ n] (new Unit measure symb scale-of-base n)))
 
-(defmethod print-method Unit [u ^Writer w] (.write w ^String (print-unit u)))
-(defmethod print-dup Unit [u ^Writer w] (.write w ^String (print-unit u)))
 
 ;; Derived Unit
 
@@ -110,9 +107,6 @@
                             (map (partial apply partial-scale))
                             (apply *)))
   (with-num [_ n] (new Derived measure units symb n)))
-
-(defmethod print-method Derived [d ^Writer w] (.write w ^String (print-unit d)))
-(defmethod print-dup Derived [d ^Writer w] (.write w ^String (print-unit d)))
 
 (defonce ^:private registry (atom {}))
 
