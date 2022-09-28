@@ -4,5 +4,6 @@
   (->measure [this])
   (->symb [this])
   (->number [this])
-  (->scale-of-base [this])
+  (to-base-number [this])
+  (from-base-number [this n])
   (with-num [this n]))

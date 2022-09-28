@@ -32,7 +32,7 @@
 
     (or (= op clojure.core/+) (= op clojure.core/-))
     (if (impl/same-measure? x y)
-      (impl/from-base-number x (op (impl/to-base-number x) (impl/to-base-number y)))
+      (prot/from-base-number x (op (prot/to-base-number x) (prot/to-base-number y)))
       (throw (ex-info (str "Cannot add/subtract " x " and " y) {:from x :to y})))
 
     :else (throw (ex-info "Unsupported operation." {:op op :x x :y y}))))
@@ -121,12 +121,15 @@
 
     :else (throw (ex-info "Unhandled case." {:unit new-u :x x}))))
 
-(defn ->unit [measure symb scale-of-base]
-  (let [unit (->Unit measure symb scale-of-base nil)]
-    (impl/register-unit! unit)
-    (fn
-      ([] unit)
-      ([x] (new-unit unit x)))))
+(defn ->unit
+  ([measure symb scale-of-base]
+   (->unit measure symb scale-of-base nil))
+  ([measure symb scale-of-base trans-of-base]
+   (let [unit (->Unit measure symb scale-of-base trans-of-base nil)]
+     (impl/register-unit! unit)
+     (fn
+       ([] unit)
+       ([x] (new-unit unit x))))))
 
 (defn ensure-basic [units]
   (let [units (update-keys units #(if (fn? %) (%) %))]
@@ -176,9 +179,13 @@
 (def kilograms (->unit :mass :kg 1))
 (def tonnes (->unit :mass :t 1000))
 
+;; Temperature
+(def kelvin (->unit :thermodynamic-temperature :K 1))
+(def celsius (->unit :thermodynamic-temperature :C 1 273.15))
+(def fahrenheit (->unit :thermodynamic-temperature :F 5/9 459.67))
+
 ;; Other SI
 (def amperes (->unit :electric-current :A 1))
-(def kelvins (->unit :thermodynamic-temperature :K 1))      ;; TODO allow translations as well
 (def mols (->unit :amount-of-substance :mol 1))
 (def candelas (->unit :luminous-intensity :cd 1))
 

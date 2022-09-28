@@ -3,10 +3,7 @@
             [clojure.string :as string]
             [units.protocols :as prot]))
 
-(defn scale [n m] (when (and n m) (* n m)))
-
-(defn to-base-number [u] (scale (prot/->number u) (prot/->scale-of-base u)))
-(defn from-base-number [u n] (prot/with-num u (scale n (/ 1 (prot/->scale-of-base u)))))
+(defn- scale [n m] (when (and n m) (* n m)))
 
 (defn same-measure? [x y]
   (cond
@@ -15,14 +12,14 @@
     :else false))
 
 (defn convert [a b]
-  (from-base-number b (to-base-number a)))
+  (prot/from-base-number b (prot/to-base-number a)))
 
 (defn print-unit [u]
   (str "#" (name (prot/->measure u)) "/" (name (prot/->symb u)) "\"" (prot/->number u) "\""))
 
 (defn- hash-unit [u]
   (if (prot/->number u)
-    (hash {:measure (prot/->measure u) :number (to-base-number (prot/->number u))})
+    (hash {:measure (prot/->measure u) :number (prot/to-base-number (prot/->number u))})
     (hash {:measure (prot/->measure u) :symb (prot/->symb u)})))
 
 (defn- equal-units? [u v]
@@ -30,11 +27,11 @@
        (or (and (every? (comp nil? prot/->number) [u v])
                 (= (prot/->symb u) (prot/->symb v)))
            (and (every? (comp some? prot/->number) [u v])
-                (== (to-base-number u) (to-base-number v))))))
+                (== (prot/to-base-number u) (prot/to-base-number v))))))
 
 ;; Basic Unit
 
-(deftype Unit [measure symb scale-of-base number]
+(deftype Unit [measure symb scale-of-base trans-of-base number]
   Object
   (toString [this] (print-unit this))
   (hashCode [this] (hash-unit this))
@@ -42,15 +39,16 @@
 
   Comparable
   (compareTo [this other] (if (same-measure? this other)
-                            (- (to-base-number this) (to-base-number other))
+                            (- (prot/to-base-number this) (prot/to-base-number other))
                             (throw (ex-info "Cannot compare units of different measure." {:x this :y other}))))
 
   prot/IUnit
   (->measure [_] measure)
   (->number [_] number)
   (->symb [_] symb)
-  (->scale-of-base [_] scale-of-base)
-  (with-num [_ n] (new Unit measure symb scale-of-base n)))
+  (to-base-number [_] (scale (+ number (or trans-of-base 0)) scale-of-base))
+  (from-base-number [this n] (prot/with-num this (+ (scale n (/ 1 scale-of-base)) (or trans-of-base 0))))
+  (with-num [_ n] (new Unit measure symb scale-of-base trans-of-base n)))
 
 
 ;; Derived Unit
@@ -67,16 +65,19 @@
        (map (partial apply unit-symbol))
        (string/join "-")))
 
+(defn numerators [units] (filter (comp pos? second) units))
+(defn denominators [units] (filter (comp neg? second) units))
+
 (defn- derived-symbol [units]
-  (let [numerators (filter (comp pos? second) units)
-        denominators (filter (comp neg? second) units)]
+  (let [numerators (numerators units)
+        denominators (denominators units)]
     (if (empty? denominators)
       (d-symbol-part numerators)
       (->> (map d-symbol-part [numerators denominators])
            (string/join ":")))))
 
-(defn- partial-scale [unit exponential]
-  (math/pow (prot/->scale-of-base unit) exponential))
+#_(defn- partial-scale [unit exponential]
+    (math/pow (prot/->scale-of-base unit) exponential))
 
 (deftype Derived [measure units symb number]
   Object
@@ -86,16 +87,24 @@
 
   Comparable
   (compareTo [this other] (if (same-measure? this other)
-                            (- (to-base-number this) (to-base-number other))
+                            (- (prot/to-base-number this) (prot/to-base-number other))
                             (throw (ex-info "Cannot compare units of different measure." {:x this :y other}))))
 
   prot/IUnit
   (->measure [_] measure)
   (->number [_] number)
   (->symb [_] (if symb symb (derived-symbol units)))
-  (->scale-of-base [_] (->> units
-                            (map (partial apply partial-scale))
-                            (apply *)))
+  (to-base-number [_] (let [numerators (mapcat (fn [[k v]] (repeat v k)) (numerators units))
+                            denominators (mapcat (fn [[k v]] (repeat (- v) k)) (denominators units))]
+                        (as-> number $
+                              (reduce (fn [n u] (prot/to-base-number (prot/with-num u n))) $ numerators)
+                              (reduce (fn [n u] (prot/->number (prot/from-base-number u n))) $ denominators))))
+  (from-base-number [this n] (let [numerators (mapcat (fn [[k v]] (repeat v k)) (numerators units))
+                                denominators (mapcat (fn [[k v]] (repeat (- v) k)) (denominators units))]
+                            (as-> n $
+                                  (reduce (fn [n u] (prot/->number (prot/from-base-number u n))) $ numerators)
+                                  (reduce (fn [n u] (prot/to-base-number (prot/with-num u n))) $ denominators)
+                                  (prot/with-num this $))))
   (with-num [_ n] (new Derived measure units symb n)))
 
 (defonce ^:private registry (atom {}))

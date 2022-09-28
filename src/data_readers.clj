@@ -34,7 +34,9 @@
  speed/km:h                  units.core/kilometers-per-hour,
  speed/m:s                   units.core/meters-per-second,
  speed/mi:h                  units.core/miles-per-hour,
- thermodynamic-temperature/K units.core/kelvins,
+ thermodynamic-temperature/C units.core/celsius,
+ thermodynamic-temperature/F units.core/fahrenheit,
+ thermodynamic-temperature/K units.core/kelvin,
  time/h                      units.core/hours,
  time/min                    units.core/minutes,
  time/s                      units.core/seconds}
