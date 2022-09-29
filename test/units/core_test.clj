@@ -44,3 +44,7 @@
   (is (= #time/h"2" (un// #energy/Wh"4" #power/W"2")))
   (is (= #time/h"2" (un// #energy/kWh"4" (un/* #amount/k"1" #power/W"2"))))
   (is (= #energy/J"2" (un/* #force/N"1" #length/m"2"))))
+
+(testing "temperature"
+  (is (= (un/kelvin 273.15) (un/kelvin (un/celsius 0))))
+  (is (= (un/* (un/kelvin 273.15) 2) (un/+ (un/celsius 0) (un/celsius 0)))))

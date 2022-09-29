@@ -69,8 +69,8 @@
   (->measure [_] measure)
   (->number [_] number)
   (->symb [_] symb)
-  (to-base-number [_] (scale (- number trans-of-base) scale-of-base))
-  (from-base-number [this n] (prot/with-num this (+ (scale n (/ 1 scale-of-base)) trans-of-base)))
+  (to-base-number [_] (scale (+ number trans-of-base) scale-of-base))
+  (from-base-number [this n] (prot/with-num this (- (scale n (/ 1 scale-of-base)) trans-of-base)))
   (with-num [_ n] (new Unit measure symb scale-of-base trans-of-base n)))
 
 
