@@ -22,7 +22,7 @@
                                       (catch Exception _ false))))
                        (map second))
         unit-sym->symbol (fn [u]
-                           (->> (str (u))
+                           (->> (print-unit (u))
                                 (drop-last 2)
                                 (drop 1)
                                 (string/join)

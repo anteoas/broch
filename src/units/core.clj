@@ -102,11 +102,14 @@
 
 
 ;; Units
+(def centi (unit :amount :c 1/100))
+(def deci (unit :amount :d 1/10))
 (def kilo (unit :amount :k 1000))
 
 ;; Length
 (def millimeters (unit :length :mm 1/1000))
 (def centimeters (unit :length :cm 1/100))
+(def decimeters (unit :kength :dm 1/10))
 (def meters (unit :length :m 1))
 (def kilometers (unit :length :km 1000))
 (def nautical-miles (unit :length :NM 1852))
@@ -140,12 +143,27 @@
 ;; Area
 (def squared-millimeters (derived :area {millimeters 2}))
 (def squared-centimeters (derived :area {centimeters 2}))
+(def squared-decimeters (derived :area {decimeters 2}))
 (def squared-meters (derived :area {meters 2}))
 (def squared-kilometers (derived :area {kilometers 2}))
 (def squared-miles (derived :area {miles 2}))
 (def squared-yards (derived :area {yards 2}))
 (def squared-feet (derived :area {feet 2}))
 (def squared-inches (derived :area {inches 2}))
+
+;; Volume
+(def cubed-millimeters (derived :area {millimeters 3}))
+(def cubed-centimeters (derived :area {centimeters 3}))
+(def cubed-meters (derived :area {meters 3}))
+(def cubed-kilometers (derived :area {kilometers 3}))
+(def cubed-miles (derived :area {miles 3}))
+(def cubed-yards (derived :area {yards 3}))
+(def cubed-feet (derived :area {feet 3}))
+(def cubed-inches (derived :area {inches 3}))
+
+(def liters (derived :area {decimeters 3} :l))
+(def deciliters (derived :area {deci 1 liters 1} :dl))
+(def deciliters (derived :area {centi 1 liters 1} :cl))
 
 ;; Speed
 (def kilometers-per-hour (derived :speed {kilometers 1 hours -1}))
