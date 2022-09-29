@@ -1,6 +1,5 @@
 (ns units.impl
   (:require [clojure.string :as string]
-            [clojure.math :as math]
             [units.protocols :as prot]))
 
 (defn- scale [n m] (when (and n m) (* n m)))
@@ -38,9 +37,6 @@
 
     :else (throw (ex-info "Unhandled case." {:unit new-u :x x}))))
 
-(defn print-unit [u]
-  (str "#" (name (prot/->measure u)) "/" (name (prot/->symb u)) "\"" (prot/->number u) "\""))
-
 (defn- hash-unit [u]
   (if (prot/->number u)
     (hash {:measure (prot/->measure u) :number (prot/to-base-number u)})
@@ -62,7 +58,7 @@
 
 (deftype Unit [measure symb scale-of-base trans-of-base number]
   Object
-  (toString [this] (print-unit this))
+  (toString [this] (str number))
   (hashCode [this] (hash-unit this))
   (equals [this other] (equal-units? this other))
 
@@ -109,7 +105,7 @@
 
 (deftype Derived [measure units symb number]
   Object
-  (toString [this] (print-unit this))
+  (toString [this] (str number))
   (hashCode [this] (hash-unit this))
   (equals [this other] (equal-units? this other))
 

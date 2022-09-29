@@ -1,4 +1,4 @@
-(ns core
+(ns units.core-test
   (:require [clojure.test :refer [testing is]]
             [units.protocols :as prot]
             [units.core :as un]
@@ -23,7 +23,7 @@
 (testing "readers"
   (doseq [u unit-fns]
     (let [unit (u 123)]
-      (is (= unit (read-string (str unit)))))))
+      (is (= unit (read-string (pr-str unit)))))))
 
 (testing "comparison"
   (is (= #length/m"1000" #length/km"1"))

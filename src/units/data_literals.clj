@@ -6,11 +6,14 @@
   (:import (units.impl Unit Derived)
            (java.io Writer)))
 
-(defmethod print-method Unit [u ^Writer w] (.write w ^String (impl/print-unit u)))
-(defmethod print-dup Unit [u ^Writer w] (.write w ^String (impl/print-unit u)))
+(defn print-unit [u]
+  (str "#" (name (prot/->measure u)) "/" (name (prot/->symb u)) "\"" (prot/->number u) "\""))
 
-(defmethod print-method Derived [d ^Writer w] (.write w ^String (impl/print-unit d)))
-(defmethod print-dup Derived [d ^Writer w] (.write w ^String (impl/print-unit d)))
+(defmethod print-method Unit [u ^Writer w] (.write w ^String (print-unit u)))
+(defmethod print-dup Unit [u ^Writer w] (.write w ^String (print-unit u)))
+
+(defmethod print-method Derived [d ^Writer w] (.write w ^String (print-unit d)))
+(defmethod print-dup Derived [d ^Writer w] (.write w ^String (print-unit d)))
 
 (comment
   ; Generate data-readers map
