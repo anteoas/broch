@@ -43,7 +43,7 @@
     (hash {:measure (prot/->measure u) :symb (prot/->symb u)})))
 
 (defn- equal-units? [u v]
-  (and (= (class u) (class v)) (same-measure? u v)
+  (and (unit? u) (unit? v) (same-measure? u v)
        (or (and (every? (comp nil? prot/->number) [u v])
                 (= (prot/->symb u) (prot/->symb v)))
            (and (every? (comp some? prot/->number) [u v])
