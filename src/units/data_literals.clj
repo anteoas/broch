@@ -1,6 +1,5 @@
 (ns units.data-literals
   (:require [units.protocols :as prot]
-            [units.impl :as impl]
             [clojure.string :as string]
             [clojure.pprint :as pp])
   (:import (units.impl Unit Derived)

@@ -7,10 +7,10 @@
 (defn unit? [x] (satisfies? prot/IUnit x))
 
 (defn same-measure? [x y]
-  (cond
-    (and (unit? x) (unit? y)) (= (prot/->measure x) (prot/->measure y))
+  (and (unit? x) (unit? y) (= (prot/->measure x) (prot/->measure y))))
 
-    :else false))
+(defn same-unit? [x y]
+  (and (unit? x) (unit? y) (= x (prot/with-num y (prot/->number x)))))
 
 (defn- convert [a b]
   (prot/from-base-number b (prot/to-base-number a)))
@@ -170,11 +170,8 @@
     (and (unit? y) (number? x))
     (prot/with-num y (op (prot/->number y) x))
 
-    (= op *)
-    (attempt-derivation x y op)
-
-    (= op /)
-    (if (same-measure? x y)
+    (or (= op *) (= op /))
+    (if (and (same-measure? x y) (not (same-unit? x y)))
       (attempt-derivation x (convert y x) op)
       (attempt-derivation x y op))
 
