@@ -26,24 +26,24 @@
       (is (= unit (read-string (pr-str unit)))))))
 
 (testing "comparison"
-  (is (= #length/m"1000" #length/km"1"))
-  (is (un/< #length/ft"1" #length/m"1"))
-  (is (un/> #time/h"1" #time/min"1")))
+  (is (= #unit/u[1000 "m"] #unit/u[1 "km"]))
+  (is (un/< #unit/u[1 "ft"] #unit/u[1 "m"]))
+  (is (un/> #unit/u[1 "h"] #unit/u[1 "min"])))
 
 (testing "simple arithmetic"
 
   (let [m (un/meters 134)
         f (un/feet 52)]
-    (is (= #length/m"149.8496" (un/+ m f)))
-    (is (= #length/m"118.1504" (un/- m f)))
-    (is (= #length/m"402" (un/* m 3)))
-    (is (= #length/m"134/3" (un// m 3)))))
+    (is (= #unit/u[149.8496 "m"] (un/+ m f)))
+    (is (= #unit/u[118.1504 "m"] (un/- m f)))
+    (is (= #unit/u[402 "m"] (un/* m 3)))
+    (is (= #unit/u[134/3 "m"] (un// m 3)))))
 
 (testing "complex arithmetic"
-  (is (= #speed/m:s"3" (un// #length/m"9" #time/s"3")))
-  (is (= #time/h"2" (un// #energy/Wh"4" #power/W"2")))
-  (is (= #time/h"2" (un// #energy/kWh"4" (un/* #amount/k"1" #power/W"2"))))
-  (is (= #energy/J"2" (un/* #force/N"1" #length/m"2"))))
+  (is (= #unit/u[3 "m/s"] (un// #unit/u[9 "m"] #unit/u[3 "s"])))
+  (is (= #unit/u[2 "h"] (un// #unit/u[4 "Wh"] #unit/u[2 "W"])))
+  (is (= #unit/u[2 "h"] (un// #unit/u[4 "kWh"] (un/* #unit/u[1 "k"] #unit/u[2 "W"]))))
+  (is (= #unit/u[2 "J"] (un/* #unit/u[1 "N"] #unit/u[2 "m"]))))
 
 (testing "temperature"
   (is (= (un/kelvin 273.15) (un/kelvin (un/celsius 0))))

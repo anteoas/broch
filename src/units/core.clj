@@ -13,8 +13,13 @@
 
 (defn unit?
   "Is this a unit?"
-  [x]
-  (impl/unit? x))
+  [u]
+  (impl/unit? u))
+
+(defn measure
+  "What this unit is a measure of."
+  [u]
+  (prot/->measure u))
 
 (defn +
   ([x] x)
@@ -95,50 +100,51 @@
          derived (->Derived measure units symb nil)]
      (assert (and (every? impl/unit? (keys units))
                   (every? int? (vals units))))
-     (impl/register-derived! derived)
+     (impl/register-unit! derived)
      (fn
        ([] derived)
        ([x] (impl/new-unit derived x))))))
 
 
 ;; Units
-(def centi (unit :amount :c 1/100))
-(def deci (unit :amount :d 1/10))
-(def kilo (unit :amount :k 1000))
+(def centi (unit :amount "c" 1/100))
+(def deci (unit :amount "d" 1/10))
+(def kilo (unit :amount "k" 1000))
 
 ;; Length
-(def millimeters (unit :length :mm 1/1000))
-(def centimeters (unit :length :cm 1/100))
-(def decimeters (unit :kength :dm 1/10))
-(def meters (unit :length :m 1))
-(def kilometers (unit :length :km 1000))
-(def nautical-miles (unit :length :NM 1852))
+(def millimeters (unit :length "mm" 1/1000))
+(def centimeters (unit :length "cm" 1/100))
+(def decimeters (unit :length "dm" 1/10))
+(def meters (unit :length "m" 1))
+(def kilometers (unit :length "km" 1000))
+(def nautical-miles (unit :length "NM" 1852))
 
 ;; Stupid Length
-(def miles (unit :length :mi 1609.344))
-(def yards (unit :length :yd 0.9144))
-(def feet (unit :length :ft 0.3048))
-(def inches (unit :length :in 0.0254))
+(def miles (unit :length "mi" 1609.344))
+(def yards (unit :length "yd" 0.9144))
+(def feet (unit :length "ft" 0.3048))
+(def inches (unit :length "in" 0.0254))
 
 ;; Time
-(def seconds (unit :time :s 1))
-(def minutes (unit :time :min 60))
-(def hours (unit :time :h 3600))
+(def seconds (unit :time "s" 1))
+(def minutes (unit :time "min" 60))
+(def hours (unit :time "h" 3600))
 
 ;; Mass
-(def grams (unit :mass :g 1/1000))
-(def kilograms (unit :mass :kg 1))
-(def tonnes (unit :mass :t 1000))
+(def grams (unit :mass "g" 1/1000))
+(def kilograms (unit :mass "kg" 1))
+(def tonnes (unit :mass "t" 1000))
 
 ;; Temperature
-(def kelvin (unit :thermodynamic-temperature :K 1))
-(def celsius (unit :thermodynamic-temperature :C 1 273.15))
-(def fahrenheit (unit :thermodynamic-temperature :F 5/9 459.67))
+(def kelvin (unit :thermodynamic-temperature "K" 1))
+(def celsius (unit :thermodynamic-temperature "C" 1 273.15))
+(def fahrenheit (unit :thermodynamic-temperature "F" 5/9 459.67))
+
 
 ;; Other SI
-(def amperes (unit :electric-current :A 1))
-(def moles (unit :amount-of-substance :mol 1))
-(def candelas (unit :luminous-intensity :cd 1))
+(def amperes (unit :electric-current "A" 1))
+(def moles (unit :amount-of-substance "mol" 1))
+(def candelas (unit :luminous-intensity "cd" 1))
 
 ;; Area
 (def squared-millimeters (derived :area {millimeters 2}))
@@ -161,9 +167,9 @@
 (def cubed-feet (derived :area {feet 3}))
 (def cubed-inches (derived :area {inches 3}))
 
-(def liters (derived :area {decimeters 3} :l))
-(def deciliters (derived :area {deci 1 liters 1} :dl))
-(def deciliters (derived :area {centi 1 liters 1} :cl))
+(def liters (derived :area {decimeters 3} "l"))
+(def deciliters (derived :area {deci 1 liters 1} "dl"))
+(def deciliters (derived :area {centi 1 liters 1} "cl"))
 
 ;; Speed
 (def kilometers-per-hour (derived :speed {kilometers 1 hours -1}))
@@ -174,12 +180,12 @@
 (def meters-per-second2 (derived :acceleration {meters 1 seconds -2}))
 
 ;; Force
-(def newtons (derived :force {kilograms 1 meters 1 seconds -2} :N))
+(def newtons (derived :force {kilograms 1 meters 1 seconds -2} "N"))
 
 ;; Power & Energy
-(def joules (derived :energy {newtons 1 meters 1} :J))
-(def watts (derived :power {joules 1 seconds -1} :W))
-(def kilowatts (derived :power {kilo 1 watts 1} :kW))
-(def watt-hours (derived :energy {watts 1 hours 1} :Wh))
-(def kilowatt-hours (derived :energy {kilowatts 1 hours 1} :kWh))
+(def joules (derived :energy {newtons 1 meters 1} "J"))
+(def watts (derived :power {joules 1 seconds -1} "W"))
+(def kilowatts (derived :power {kilo 1 watts 1} "kW"))
+(def watt-hours (derived :energy {watts 1 hours 1} "Wh"))
+(def kilowatt-hours (derived :energy {kilowatts 1 hours 1} "kWh"))
 

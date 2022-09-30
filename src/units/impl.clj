@@ -81,12 +81,12 @@
         exp (Math/abs exponent)]
     (if (= 1 exp)
       symb
-      (str symb exp))))
+      (str symb "^" exp))))
 
 (defn- d-symbol-part [unit-seq]
   (->> (sort-by (comp prot/->symb first) unit-seq)
        (map (partial apply unit-symbol))
-       (string/join "-")))
+       (string/join)))
 
 (defn numerators [units] (filter (comp pos? second) units))
 (defn denominators [units] (filter (comp neg? second) units))
@@ -97,7 +97,7 @@
     (if (empty? denominators)
       (d-symbol-part numerators)
       (->> (map d-symbol-part [numerators denominators])
-           (string/join ":")))))
+           (string/join "/")))))
 
 (defn- repeated-numer-denom [units]
   [(mapcat (fn [[k v]] (repeat v k)) (numerators units))
@@ -127,17 +127,21 @@
                                      (prot/with-num this $))))
   (with-num [_ n] (new Derived measure units symb n)))
 
-(defonce ^:private registry (atom {}))
-
-(defn register-unit! [unit]
-  (swap! registry assoc {(prot/with-num unit nil) 1} (prot/with-num unit nil)))
-(defn register-derived! [derived]
-  (swap! registry assoc (.units derived) derived))
+(def symbol-reg (atom {}))
+(def unit-reg (atom {}))
 
 (defn- units [x]
   (cond
     (instance? Unit x) {(prot/with-num x nil) 1}
     (instance? Derived x) (.units x)))
+
+(defn register-unit! [unit]
+  (swap! unit-reg assoc (units unit) unit)
+  (if (@symbol-reg (prot/->symb unit))
+    (binding [*out* *err*]
+      (println "WARN: a unit with symbol" (prot/->symb unit) "already exists!"))
+    (swap! symbol-reg assoc (prot/->symb unit) unit)))
+
 
 (defn- derive-units [x y op]
   (let [units-x (units x)
@@ -149,15 +153,15 @@
          (into {}))))
 
 (defn attempt-derivation [x y op]
-  (let [derived (derive-units x y op)]
+  (let [derived-units (derive-units x y op)]
     (cond
-      (empty? derived) (op (prot/->number x) (prot/->number y))
+      (empty? derived-units) (op (prot/->number x) (prot/->number y))
 
-      (@registry derived)
-      (prot/from-base-number (@registry derived) (op (prot/to-base-number x) (prot/to-base-number y)))
+      (@unit-reg derived-units)
+      (prot/from-base-number (@unit-reg derived-units) (op (prot/to-base-number x) (prot/to-base-number y)))
 
-      :else (throw (ex-info (str "No derived unit is registered for " (derived-symbol derived))
-                            derived)))))
+      :else (throw (ex-info (str "No derived unit is registered for " (derived-symbol derived-units))
+                            derived-units)))))
 
 (defn boxed-arithmetic [x y op]
   (cond
