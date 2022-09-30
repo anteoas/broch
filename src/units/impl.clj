@@ -29,11 +29,11 @@
         (prot/with-num new-u n)
         (throw (ex-info (str "Can't make units with other things than numbers: " x) {:x x}))))
 
-    (and (unit? x) (same-measure? x new-u))
-    (convert x new-u)
-
-    (and (unit? x) (not (same-measure? x new-u)))
-    (throw (ex-info (str "Cannot convert a " x " into " new-u) {:fomr x :to new-u}))
+    (unit? x)
+    (if (same-measure? x new-u)
+      (convert x new-u)
+      (throw (ex-info (str "Cannot convert a " (prot/->measure x) " into " (prot/->measure new-u))
+                      {:from x :to new-u})))
 
     :else (throw (ex-info "Unhandled case." {:unit new-u :x x}))))
 
@@ -182,7 +182,7 @@
     (or (= op +) (= op -))
     (if (same-measure? x y)
       (prot/from-base-number x (op (prot/to-base-number x) (prot/to-base-number y)))
-      (throw (ex-info (str "Cannot add/subtract " x " and " y) {:from x :to y})))
+      (throw (ex-info (str "Cannot add/subtract " (prot/->measure x) " and " (prot/->measure y)) {:from x :to y})))
 
     :else (throw (ex-info "Unsupported operation." {:op op :x x :y y}))))
 

@@ -15,25 +15,25 @@ The ergonomics for handling units is inspired by [tick.core](https://github.com/
   (:require [units.core :as un]))
 
 ; making a unit
-(un/meters 10) ;=> #length/m"10"
+(un/meters 10) ;=> #unit/u[10 "m"]
 
 ; data literals
-#length/m"10" ;=> #length/m"10"
+#unit/u[10 "m"] ;=> #unit/u[10 "m"]
 
 ; the unit fns also convert units if compatible
-(un/feet #length/m"10") ;=> #length/ft"32.80839895013123"
+(un/feet #unit/u[10 "m"]) ;=> #unit/u[32.80839895013123 "ft"]
 
 ; but conversion of incompatible units throws an error
 (un/meters (un/seconds 3)) ;=> ExceptionInfo "Cannot convert from :time to :length"
 
 ; you can compare compatible units
-(un/> #length/km"1" #length/m"999") ;=> true
+(un/> #unit/u[1 "km"] #unit/u[999 "m"]) ;=> true
 
 ; and do arithmetic
-(un/- #length/km"2" #length/mi"1") ;=> #length/km"0.39065599999999995"
+(un/- #unit/u[1 "km"] #unit/u[1 "mi"]) ;=> #unit/u[-0.6093440000000001 "km"]
 
 ; and, again, we get sensible errors if incompatible
-(un/- #length/km"2" #time/s"1") ;=> ExceptionInfo "Cannot convert from :time to :length"
+(un/- #unit/u[2 "km"] #unit/u[1 "s"]) ;=> ExceptionInfo "Cannot add/subtract :length and :time"
 
 ```
 
