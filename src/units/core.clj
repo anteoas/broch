@@ -1,25 +1,25 @@
 (ns units.core
-  (:refer-clojure :exclude [* + - / < <= > >=])
+  (:refer-clojure :exclude [* + - / < <= > >= num])
   (:require [units.impl :as impl :refer [->Unit ->Derived]]
-            [units.protocols :as prot]
             [units.data-literals]))
 
 ;; Operations on Units
 
 (defn box
   "Call any fn on the number directly. Returns same unit."
-  [f]
-  #(prot/with-num % (f (prot/->number %))))
+  [f] #(impl/with-num % (f (impl/->number %))))
 
 (defn unit?
   "Is this a unit?"
-  [u]
-  (impl/unit? u))
+  [u] (impl/unit? u))
 
 (defn measure
   "What this unit is a measure of."
-  [u]
-  (prot/->measure u))
+  [u] (impl/->measure u))
+
+(defn num
+  "Get just the number"
+  [x] (impl/->number x))
 
 (defn +
   ([x] x)

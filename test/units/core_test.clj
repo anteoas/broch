@@ -1,8 +1,6 @@
 (ns units.core-test
   (:require [clojure.test :refer [testing is]]
-            [units.protocols :as prot]
-            [units.core :as un]
-            [units.impl :as impl]))
+            [units.core :as un]))
 
 (defn fuzzy= [tolerance x y]
   (let [diff (Math/abs ^long (- x y))]
@@ -10,15 +8,15 @@
 
 (def unit-fns (->> (ns-interns 'units.core)
                    (filter (fn [[_ v]]
-                             (try (satisfies? prot/IUnit (v))
+                             (try (un/unit? (v))
                                   (catch Exception _ false))))
                    (map second)))
 
 (testing "units of same measure are invertible"
   (doseq [u unit-fns]
-    (let [units-of-same-measure (filter #(impl/same-measure? (u) (%)) unit-fns)]
+    (let [units-of-same-measure (filter #(= (un/measure (u)) (un/measure (%))) unit-fns)]
       (doseq [v units-of-same-measure]
-        (is (fuzzy= 0.000001 (prot/->number (u 123)) (prot/->number (u (v (u 123))))))))))
+        (is (fuzzy= 0.000001 (un/num (u 123)) (un/num (u (v (u 123))))))))))
 
 (testing "readers"
   (doseq [u unit-fns]
