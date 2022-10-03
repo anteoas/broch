@@ -175,6 +175,7 @@
 (def kilometers-per-hour (derived :speed {kilometers 1 hours -1}))
 (def meters-per-second (derived :speed {meters 1 seconds -1}))
 (def miles-per-hour (derived :speed {miles 1 hours -1}))
+(def knots (derived :speed {nautical-miles 1 hours -1} :kn))
 
 ;; Acceleration
 (def meters-per-second2 (derived :acceleration {meters 1 seconds -2}))
