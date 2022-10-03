@@ -158,18 +158,18 @@
 (def squared-inches (derived :area {inches 2}))
 
 ;; Volume
-(def cubed-millimeters (derived :area {millimeters 3}))
-(def cubed-centimeters (derived :area {centimeters 3}))
-(def cubed-meters (derived :area {meters 3}))
-(def cubed-kilometers (derived :area {kilometers 3}))
-(def cubed-miles (derived :area {miles 3}))
-(def cubed-yards (derived :area {yards 3}))
-(def cubed-feet (derived :area {feet 3}))
-(def cubed-inches (derived :area {inches 3}))
+(def cubed-millimeters (derived :volume {millimeters 3}))
+(def cubed-centimeters (derived :volume {centimeters 3}))
+(def cubed-meters (derived :volume {meters 3}))
+(def cubed-kilometers (derived :volume {kilometers 3}))
+(def cubed-miles (derived :volume {miles 3}))
+(def cubed-yards (derived :volume {yards 3}))
+(def cubed-feet (derived :volume {feet 3}))
+(def cubed-inches (derived :volume {inches 3}))
 
-(def liters (derived :area {decimeters 3} "l"))
-(def deciliters (derived :area {deci 1 liters 1} "dl"))
-(def deciliters (derived :area {centi 1 liters 1} "cl"))
+(def liters (derived :volume {decimeters 3} "l"))
+(def deciliters (derived :volume {deci 1 liters 1} "dl"))
+(def deciliters (derived :volume {centi 1 liters 1} "cl"))
 
 ;; Speed
 (def kilometers-per-hour (derived :speed {kilometers 1 hours -1}))
