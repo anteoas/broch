@@ -15,4 +15,4 @@
 (defn from-edn [[n s]]
   (if (@impl/symbol-reg s)
     (impl/with-num (@impl/symbol-reg s) n)
-    (throw (str "Symbol " s "not registered!" {:symbol s :registry @impl/symbol-reg}))))
+    (throw (ex-info (str "Symbol " s " not registered!") {:number n :symbol s :registry @impl/symbol-reg}))))
