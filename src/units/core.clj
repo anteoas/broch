@@ -5,10 +5,6 @@
 
 ;; Operations on Units
 
-(defn box
-  "Call any fn on the number directly. Returns same unit."
-  [f] #(impl/with-num % (f (impl/->number %))))
-
 (defn unit?
   "Is this a unit?"
   [u] (impl/unit? u))
@@ -18,8 +14,16 @@
   [u] (impl/->measure u))
 
 (defn num
-  "Get just the number"
+  "Get just the number."
   [x] (impl/->number x))
+
+(defn with-num
+  "Make copy of unit with a different number."
+  [unit n] (impl/with-num unit n))
+
+(defn box
+  "Call any fn on the number directly. Returns same unit."
+  [f] #(with-num % (f (num %))))
 
 (defn +
   ([x] x)
