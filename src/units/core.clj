@@ -143,6 +143,7 @@
 (def kilograms (unit :mass "kg" 1))
 (def tonnes (unit :mass "t" 1000))
 
+(def kilograms-per-second (derived :mass-rate {kilograms 1 seconds -1}))
 (def kilograms-per-hour (derived :mass-rate {kilograms 1 hours -1}))
 (def tonnes-per-hour (derived :mass-rate {tonnes 1 hours -1}))
 
