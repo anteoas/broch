@@ -91,6 +91,8 @@
   ([measure symb scale-of-base]
    (unit measure symb scale-of-base 0))
   ([measure symb scale-of-base trans-of-base]
+   {:pre  [(keyword? measure) (string? symb) (number? scale-of-base) (number? trans-of-base)]
+    :post [(fn? %)]}
    (let [unit (->Unit measure symb scale-of-base trans-of-base nil)]
      (impl/register-unit! unit)
      (fn
@@ -100,6 +102,8 @@
 (defn derived
   ([measure units] (derived measure units nil))
   ([measure units symb]
+   {:pre  [(keyword? measure) (map? units) (or (nil? symb) (string? symb))]
+    :post [(fn? %)]}
    (let [units (impl/ensure-basic units)
          derived (->Derived measure units symb nil)]
      (assert (and (every? impl/unit? (keys units))
