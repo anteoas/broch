@@ -146,7 +146,7 @@
     (with-num x (op (->number x) y))
 
     (and (number? x) (unit? y))
-    (with-num y (op (->number y) x))
+    (with-num y (op x (->number y)))
 
     (or (= op *) (= op /))
     (if (and (same-measure? x y) (not (same-unit? x y)))
