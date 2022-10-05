@@ -143,6 +143,9 @@
 (def kilograms (unit :mass "kg" 1))
 (def tonnes (unit :mass "t" 1000))
 
+(def kilograms-per-hour (derived :mass-rate {kilograms 1 hours -1}))
+(def tonnes-per-hour (derived :mass-rate {tonnes 1 hours -1}))
+
 ;; Temperature
 (def kelvin (unit :thermodynamic-temperature "K" 1))
 (def celsius (unit :thermodynamic-temperature "C" 1 273.15))
@@ -179,11 +182,14 @@
 (def deciliters (derived :volume {deci 1 liters 1} "dl"))
 (def deciliters (derived :volume {centi 1 liters 1} "cl"))
 
+(def liters-per-hour (derived :volume-rate {liters 1 hours -1}))
+(def liters-per-second (derived :volume-rate {liters 1 seconds -1}))
+
 ;; Speed
 (def kilometers-per-hour (derived :speed {kilometers 1 hours -1}))
 (def meters-per-second (derived :speed {meters 1 seconds -1}))
 (def miles-per-hour (derived :speed {miles 1 hours -1}))
-(def knots (derived :speed {nautical-miles 1 hours -1} :kn))
+(def knots (derived :speed {nautical-miles 1 hours -1} "kn"))
 
 ;; Acceleration
 (def meters-per-second2 (derived :acceleration {meters 1 seconds -2}))
