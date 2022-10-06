@@ -29,11 +29,17 @@
     (throw (ex-info "Cannot compare units of different measure." {:x x :y y}))))
 
 (defn- downcast
-  "If BigInt or BigInteger, attempt to cast to long."
+  "If BigInt or BigInteger, attempt to cast to long.
+  If Ratio, and casting doesn't lose precision, cast to double."
   [n]
-  (if (or (instance? BigInt n) (instance? BigInteger n))
-    (try (long n) (catch Exception _ n))
-    n))
+  (cond
+    (or (instance? BigInt n) (instance? BigInteger n)) (try (long n) (catch Exception _ n))
+    (and (ratio? n) (= n (rationalize (double n)))) (double n)
+    :else n))
+
+(defn- scale
+  "Perform f on n in \"rational space\". "
+  [n f] (when n (downcast (f (rationalize n)))))
 
 ;; Basic Unit
 
@@ -51,8 +57,8 @@
   (->number [_] number)
   (->symbol [_] symb)
   (->units [this] {(with-num this nil) 1})
-  (to-base-number [_] (when number (downcast (* (+ number trans-of-base) scale-of-base))))
-  (from-base-number [this n] (with-num this (when n (downcast (- (/ n scale-of-base) trans-of-base)))))
+  (to-base-number [_] (scale number #(* (+ % trans-of-base) scale-of-base)))
+  (from-base-number [this n] (with-num this (scale n #(- (/ % scale-of-base) trans-of-base))))
   (with-num [_ n] (new Unit measure symb scale-of-base trans-of-base n)))
 
 
@@ -102,13 +108,11 @@
   (to-base-number [_] (let [[numerators denominators] (repeated-numer-denom units)]
                         (as-> number $
                               (reduce (fn [n u] (to-base-number (with-num u n))) $ numerators)
-                              (reduce (fn [n u] (->number (from-base-number u n))) $ denominators)
-                              (downcast $))))
+                              (reduce (fn [n u] (->number (from-base-number u n))) $ denominators))))
   (from-base-number [this n] (let [[numerators denominators] (repeated-numer-denom units)]
                                (as-> n $
                                      (reduce (fn [n u] (->number (from-base-number u n))) $ numerators)
                                      (reduce (fn [n u] (to-base-number (with-num u n))) $ denominators)
-                                     (downcast $)
                                      (with-num this $))))
   (with-num [_ n] (new Derived measure units symb n)))
 
