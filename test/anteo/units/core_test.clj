@@ -1,12 +1,12 @@
-(ns units.core-test
+(ns anteo.units.core-test
   (:require [clojure.test :refer [testing is]]
-            [units.core :as un]))
+            [anteo.units :as un]))
 
 (defn fuzzy= [tolerance x y]
   (let [diff (Math/abs ^long (- x y))]
     (< diff tolerance)))
 
-(def unit-fns (->> (ns-interns 'units.core)
+(def unit-fns (->> (ns-interns 'anteo.units)
                    (filter (fn [[_ v]]
                              (try (un/unit? (v))
                                   (catch Exception _ false))))

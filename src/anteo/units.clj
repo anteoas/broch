@@ -1,7 +1,7 @@
-(ns units.core
+(ns anteo.units
   (:refer-clojure :exclude [* + - / < <= > >= num])
-  (:require [units.impl :as impl :refer [->Unit ->Derived]]
-            [units.data-literals]))
+  (:require [anteo.units.impl :as impl :refer [->Unit ->Derived]]
+            [anteo.units.data-literals]))
 
 ;; Operations on Units
 

@@ -1,6 +1,6 @@
-(ns units.data-literals
-  (:require [units.impl :as impl])
-  (:import (units.impl Unit Derived)
+(ns anteo.units.data-literals
+  (:require [anteo.units.impl :as impl])
+  (:import (anteo.units.impl Unit Derived)
            (java.io Writer)))
 
 (defn to-edn [u] [(impl/->number u) (impl/->symbol u)])
