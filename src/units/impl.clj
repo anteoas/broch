@@ -30,11 +30,11 @@
 
 (defn- downcast
   "If BigInt or BigInteger, attempt to cast to long.
-  If Ratio, and casting doesn't lose precision, cast to double."
+   If Ratio, cast to double. Which might lower precision."
   [n]
   (cond
     (or (instance? BigInt n) (instance? BigInteger n)) (try (long n) (catch Exception _ n))
-    (and (ratio? n) (= n (rationalize (double n)))) (double n)
+    (ratio? n) (double n)
     :else n))
 
 (defn- scale
