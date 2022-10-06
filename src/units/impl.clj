@@ -1,5 +1,6 @@
 (ns units.impl
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string])
+  (:import (clojure.lang BigInt)))
 
 (defprotocol IUnit
   (->measure [this])
@@ -27,6 +28,13 @@
     (compare (to-base-number x) (to-base-number y))
     (throw (ex-info "Cannot compare units of different measure." {:x x :y y}))))
 
+(defn- downcast
+  "If BigInt or BigInteger, attempt to cast to long."
+  [n]
+  (if (or (instance? BigInt n) (instance? BigInteger n))
+    (try (long n) (catch Exception _ n))
+    n))
+
 ;; Basic Unit
 
 (deftype Unit [measure symb scale-of-base trans-of-base number]
@@ -43,8 +51,8 @@
   (->number [_] number)
   (->symbol [_] symb)
   (->units [this] {(with-num this nil) 1})
-  (to-base-number [_] (when number (* (+ number trans-of-base) scale-of-base)))
-  (from-base-number [this n] (with-num this (when n (- (/ n scale-of-base) trans-of-base))))
+  (to-base-number [_] (when number (downcast (* (+ number trans-of-base) scale-of-base))))
+  (from-base-number [this n] (with-num this (when n (downcast (- (/ n scale-of-base) trans-of-base)))))
   (with-num [_ n] (new Unit measure symb scale-of-base trans-of-base n)))
 
 
@@ -94,11 +102,13 @@
   (to-base-number [_] (let [[numerators denominators] (repeated-numer-denom units)]
                         (as-> number $
                               (reduce (fn [n u] (to-base-number (with-num u n))) $ numerators)
-                              (reduce (fn [n u] (->number (from-base-number u n))) $ denominators))))
+                              (reduce (fn [n u] (->number (from-base-number u n))) $ denominators)
+                              (downcast $))))
   (from-base-number [this n] (let [[numerators denominators] (repeated-numer-denom units)]
                                (as-> n $
                                      (reduce (fn [n u] (->number (from-base-number u n))) $ numerators)
                                      (reduce (fn [n u] (to-base-number (with-num u n))) $ denominators)
+                                     (downcast $)
                                      (with-num this $))))
   (with-num [_ n] (new Derived measure units symb n)))
 
