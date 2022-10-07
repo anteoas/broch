@@ -14,8 +14,8 @@
   [u] (impl/->measure u))
 
 (defn num
-  "Get just the number."
-  [x] (impl/->number x))
+  "Get just the number. Pass through if already a number."
+  [x] (if (number? x) x (impl/->number x)))
 
 (defn with-num
   "Make copy of unit with a different number."
