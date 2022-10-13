@@ -181,7 +181,7 @@
 
 (def liters (derived :volume {decimeters 3} "l"))
 (def deciliters (derived :volume {deci 1 liters 1} "dl"))
-(def deciliters (derived :volume {centi 1 liters 1} "cl"))
+(def centiliters (derived :volume {centi 1 liters 1} "cl"))
 
 (def liters-per-hour (derived :volume-rate {liters 1 hours -1}))
 (def liters-per-second (derived :volume-rate {liters 1 seconds -1}))
