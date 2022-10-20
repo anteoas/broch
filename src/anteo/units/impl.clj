@@ -41,6 +41,10 @@
   "Perform f on n in \"rational space\". "
   [n f] (when n (downcast (f (rationalize n)))))
 
+(defn- rationalize-op
+  "Perform op in \"rational space\". "
+  [op] (fn [x y] (downcast (op (rationalize x) (rationalize y)))))
+
 ;; Basic Unit
 
 (deftype Unit [measure symb scale-of-base trans-of-base number]
@@ -140,13 +144,16 @@
          (filter (comp not zero? second))
          (into {}))))
 
+(defn do-op [op x y]
+  ((rationalize-op op) x y))
+
 (defn attempt-derivation [x y op]
   (let [derived-units (derive-units x y op)]
     (cond
-      (empty? derived-units) (op (->number x) (->number y))
+      (empty? derived-units) (do-op op (->number x) (->number y))
 
       (@unit-reg derived-units)
-      (from-base-number (@unit-reg derived-units) (op (to-base-number x) (to-base-number y)))
+      (from-base-number (@unit-reg derived-units) (do-op op (to-base-number x) (to-base-number y)))
 
       :else (throw (ex-info (str "No derived unit is registered for " (derived-symbol derived-units))
                             derived-units)))))
@@ -157,10 +164,10 @@
     (op x y)
 
     (and (unit? x) (number? y))
-    (with-num x (op (->number x) y))
+    (with-num x (do-op op (->number x) y))
 
     (and (number? x) (unit? y))
-    (with-num y (op x (->number y)))
+    (with-num y (do-op op x (->number y)))
 
     (or (= op *) (= op /))
     (if (and (same-measure? x y) (not (same-unit? x y)))
@@ -169,7 +176,7 @@
 
     (or (= op +) (= op -))
     (if (same-measure? x y)
-      (from-base-number x (op (to-base-number x) (to-base-number y)))
+      (from-base-number x (do-op op (to-base-number x) (to-base-number y)))
       (throw (ex-info (str "Cannot add/subtract " (->measure x) " and " (->measure y)) {:from x :to y})))
 
     :else (throw (ex-info "Unsupported operation." {:op op :x x :y y}))))
