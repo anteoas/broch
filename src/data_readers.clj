@@ -1,1 +1,1 @@
-{unit/u anteo.units.data-literals/from-edn}
+{unit/u anteo.units.data/from-edn}

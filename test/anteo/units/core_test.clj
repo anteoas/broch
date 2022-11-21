@@ -12,16 +12,27 @@
                                   (catch Exception _ false))))
                    (map second)))
 
-(testing "units of same measure are invertible"
-  (doseq [u unit-fns]
-    (let [units-of-same-measure (filter #(= (un/measure (u)) (un/measure (%))) unit-fns)]
-      (doseq [v units-of-same-measure]
-        (is (fuzzy= 0.000001 (un/num (u 123)) (un/num (u (v (u 123))))))))))
-
 (testing "readers"
   (doseq [u unit-fns]
     (let [unit (u 123)]
       (is (= unit (read-string (pr-str unit)))))))
+
+(testing "API fns"
+  (let [m (un/meters 123)]
+    (is (un/unit? m))
+    (is (= (un/measure m) :length))
+    (is (= (un/symbol m) "m"))
+    (is (= (un/num m) 123))
+    (is (= (un/num (un/with-num m 1234)) 1234))
+    (is (= ((un/box inc) m) (un/meters 124)))
+    (is (= m (un/from-edn [123 "m"])))
+    (is (= [123 "m"] (un/to-edn m)))))
+
+(testing "invertible conversion"
+  (doseq [u unit-fns]
+    (let [units-of-same-measure (filter #(= (un/measure (u)) (un/measure (%))) unit-fns)]
+      (doseq [v units-of-same-measure]
+        (is (fuzzy= 0.000001 (un/num (u 123)) (un/num (u (v (u 123))))))))))
 
 (testing "comparison"
   (is (= #unit/u[1000 "m"] #unit/u[1 "km"]))
@@ -29,7 +40,6 @@
   (is (un/> #unit/u[1 "h"] #unit/u[1 "min"])))
 
 (testing "simple arithmetic"
-
   (let [m (un/meters 134)
         f (un/feet 52)]
     (is (= #unit/u[149.8496 "m"] (un/+ m f)))
