@@ -54,6 +54,3 @@
   (is (= #unit/u[2 "J"] (un/* #unit/u[1 "N"] #unit/u[2 "m"])))
   (is (= #unit/u[0 "m"] (un// 0 #unit/u[2 "m"]))))
 
-(testing "temperature"
-  (is (= (un/kelvin 273.15) (un/kelvin (un/celsius 0))))
-  (is (= (un/* (un/kelvin 273.15) 2) (un/+ (un/celsius 0) (un/celsius 0)))))

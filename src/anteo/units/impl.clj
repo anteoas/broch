@@ -47,7 +47,7 @@
 
 ;; Basic Unit
 
-(deftype Unit [measure symb scale-of-base trans-of-base number]
+(deftype Unit [measure symb scale-of-base number]
   Object
   (toString [_] (str number))
   (hashCode [this] (hash-unit this))
@@ -61,9 +61,9 @@
   (->number [_] number)
   (->symbol [_] symb)
   (->units [this] {(with-num this nil) 1})
-  (to-base-number [_] (scale number #(* (+ % trans-of-base) scale-of-base)))
-  (from-base-number [this n] (with-num this (scale n #(- (/ % scale-of-base) trans-of-base))))
-  (with-num [_ n] (new Unit measure symb scale-of-base trans-of-base n)))
+  (to-base-number [_] (scale number #(* % scale-of-base)))
+  (from-base-number [this n] (with-num this (scale n #(/ % scale-of-base))))
+  (with-num [_ n] (new Unit measure symb scale-of-base n)))
 
 
 ;; Derived Unit

@@ -98,16 +98,14 @@
 (defn new-unit
   "Register a new unit with given measure symbol and scaling.
   Returns a unit-fn (fn [number]) that creates a new unit from a number."
-  ([measure symb scale-of-base]
-   (new-unit measure symb scale-of-base 0))
-  ([measure symb scale-of-base trans-of-base]
-   {:pre  [(keyword? measure) (string? symb) (number? scale-of-base) (number? trans-of-base)]
-    :post [(fn? %)]}
-   (let [unit (->Unit measure symb scale-of-base trans-of-base nil)]
-     (impl/register-unit! unit)
-     (fn
-       ([] unit)
-       ([x] (impl/new-unit unit x))))))
+  [measure symb scale-of-base]
+  {:pre  [(keyword? measure) (string? symb) (number? scale-of-base)]
+   :post [(fn? %)]}
+  (let [unit (->Unit measure symb scale-of-base nil)]
+    (impl/register-unit! unit)
+    (fn
+      ([] unit)
+      ([x] (impl/new-unit unit x)))))
 
 (defn new-derived
   "Register a new derived unit with the given measure and unit composition as a map of unit-fns to exponents.
@@ -159,13 +157,8 @@
 (def kilograms-per-hour (new-derived :mass-rate {kilograms 1 hours -1}))
 (def tonnes-per-hour (new-derived :mass-rate {tonnes 1 hours -1}))
 
-;; Temperature
-(def kelvin (new-unit :thermodynamic-temperature "K" 1))
-(def celsius (new-unit :thermodynamic-temperature "C" 1 273.15))
-(def fahrenheit (new-unit :thermodynamic-temperature "F" 5/9 459.67))
-
-
 ;; Other SI
+(def kelvin (new-unit :thermodynamic-temperature "K" 1))
 (def amperes (new-unit :electric-current "A" 1))
 (def moles (new-unit :amount-of-substance "mol" 1))
 (def candelas (new-unit :luminous-intensity "cd" 1))
