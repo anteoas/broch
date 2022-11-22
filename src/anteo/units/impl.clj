@@ -1,5 +1,4 @@
 (ns anteo.units.impl
-  (:require [clojure.string :as string])
   (:import (clojure.lang BigInt)))
 
 (defprotocol IUnit
@@ -68,34 +67,14 @@
 
 ;; Derived Unit
 
-(defn- unit-symbol [unit ^Integer exponent]
-  (let [symb (name (->symbol unit))
-        exp (Math/abs exponent)]
-    (if (= 1 exp)
-      symb
-      (str symb "^" exp))))
-
-(defn- d-symbol-part [unit-seq]
-  (->> (sort-by (comp ->symbol first) unit-seq)
-       (map (partial apply unit-symbol))
-       (string/join)))
-
 (defn numerators [units] (filter (comp pos? second) units))
 (defn denominators [units] (filter (comp neg? second) units))
-
-(defn- derived-symbol [units]
-  (let [numerators (numerators units)
-        denominators (denominators units)]
-    (if (empty? denominators)
-      (d-symbol-part numerators)
-      (->> (map d-symbol-part [numerators denominators])
-           (string/join "/")))))
 
 (defn- repeated-numer-denom [units]
   [(mapcat (fn [[k v]] (repeat v k)) (numerators units))
    (mapcat (fn [[k v]] (repeat (- v) k)) (denominators units))])
 
-(deftype Derived [measure units symb number]
+(deftype Derived [measure units symb scale-of-base number]
   Object
   (toString [_] (str number))
   (hashCode [this] (hash-unit this))
@@ -107,18 +86,21 @@
   IUnit
   (->measure [_] measure)
   (->number [_] number)
-  (->symbol [_] (or symb (derived-symbol units)))
-  (->units [_] units)
+  (->symbol [_] symb)
+  (->units [_] (cond-> units
+                 scale-of-base (merge {:scaled scale-of-base})))
   (to-base-number [_] (let [[numerators denominators] (repeated-numer-denom units)]
                         (as-> number $
                               (reduce (fn [n u] (to-base-number (with-num u n))) $ numerators)
-                              (reduce (fn [n u] (->number (from-base-number u n))) $ denominators))))
+                              (reduce (fn [n u] (->number (from-base-number u n))) $ denominators)
+                              (scale $ #(* % (or scale-of-base 1))))))
   (from-base-number [this n] (let [[numerators denominators] (repeated-numer-denom units)]
                                (as-> n $
                                      (reduce (fn [n u] (->number (from-base-number u n))) $ numerators)
                                      (reduce (fn [n u] (to-base-number (with-num u n))) $ denominators)
+                                     (scale $ #(/ % (or scale-of-base 1)))
                                      (with-num this $))))
-  (with-num [_ n] (new Derived measure units symb n)))
+  (with-num [_ n] (new Derived measure units symb scale-of-base n)))
 
 
 ;; Registry
@@ -155,8 +137,10 @@
       (@unit-reg derived-units)
       (from-base-number (@unit-reg derived-units) (do-op op (to-base-number x) (to-base-number y)))
 
-      :else (throw (ex-info (str "No derived unit is registered for " (derived-symbol derived-units))
-                            derived-units)))))
+      (@unit-reg (dissoc derived-units :scaled))
+      (from-base-number (@unit-reg (dissoc derived-units :scaled)) (do-op op (to-base-number x) (to-base-number y)))
+
+      :else (throw (ex-info (str "No derived unit is registered for " derived-units) derived-units)))))
 
 (defn boxed-arithmetic [x y op]
   (cond

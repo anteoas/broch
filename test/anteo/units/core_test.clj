@@ -50,7 +50,7 @@
 (testing "complex arithmetic"
   (is (= #unit/u[3 "m/s"] (un// #unit/u[9 "m"] #unit/u[3 "s"])))
   (is (= #unit/u[2 "h"] (un// #unit/u[4 "Wh"] #unit/u[2 "W"])))
-  (is (= #unit/u[2 "h"] (un// #unit/u[4 "kWh"] (un/* #unit/u[1 "k"] #unit/u[2 "W"]))))
+  (is (= #unit/u[2 "h"] (un// #unit/u[4 "kWh"] (un/* 1000 #unit/u[2 "W"]))))
   (is (= #unit/u[2 "J"] (un/* #unit/u[1 "N"] #unit/u[2 "m"])))
   (is (= #unit/u[0 "m"] (un// 0 #unit/u[2 "m"]))))
 
