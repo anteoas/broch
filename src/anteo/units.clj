@@ -1,9 +1,11 @@
 (ns anteo.units
   (:refer-clojure :exclude [* + - / < <= > >= num symbol])
   (:require [anteo.units.impl :as impl :refer [->Unit ->Derived]]
+            [anteo.units.protocols :as p]
             [anteo.units.data :as data]))
 
 ;; Operations on Units
+;; most of these also work on numbers directly
 
 (defn unit?
   "Is this a unit?"
@@ -11,23 +13,27 @@
 
 (defn measure
   "What this unit is a measure of."
-  [u] (impl/->measure u))
+  [u] (when-not (number? u) (p/->measure u)))
 
 (defn symbol
   "The symbol for this unit."
-  [u] (impl/->symbol u))
+  [u] (when-not (number? u) (p/->symbol u)))
 
 (defn num
   "Get just the number. Pass through if already a number."
-  [x] (if (number? x) x (impl/->number x)))
+  [x] (if (number? x) x (p/->number x)))
 
 (defn with-num
   "Make copy of unit with a different number."
-  [unit n] (impl/with-num unit n))
+  [unit n] (p/with-num unit n))
 
 (defn box
-  "Call any fn on the number directly. Returns same unit."
-  [f] #(with-num % (f (num %))))
+  "Transform the units number by any fn (i.e. fmap on the unit-functor).
+  Also works for numbers."
+  [f] (fn [x]
+        (if (number? x)
+          (f x)
+          (with-num x (f (num x))))))
 
 (defn +
   ([x] x)
@@ -102,7 +108,7 @@
   ([measure symb scale-of-base]
    {:pre  [(keyword? measure) (string? symb) (or (nil? scale-of-base) (number? scale-of-base))]
     :post [(fn? %)]}
-   (let [unit (->Unit measure symb (or scale-of-base 1) nil)]
+   (let [unit (->Unit measure symb (rationalize (or scale-of-base 1)) nil)]
      (impl/register-unit! unit)
      (fn
        ([] unit)
@@ -113,13 +119,11 @@
   Returns a unit-fn (fn [number]) that creates a new unit from a number."
   ([measure units symb] (new-derived measure units symb nil))
   ([measure units symb scale-of-base]
-   {:pre  [(keyword? measure) (map? units) (string? symb)
-           (or (nil? scale-of-base) (number? scale-of-base))]
+   {:pre  [(keyword? measure) (map? units) (string? symb) (or (nil? scale-of-base) (number? scale-of-base))]
     :post [(fn? %)]}
-   (let [units (impl/ensure-basic units)
-         derived (->Derived measure units symb scale-of-base nil)]
-     (assert (and (every? impl/unit? (keys units))
-                  (every? int? (vals units))))
+   (let [units (impl/ensure-basic (cond-> units
+                                    scale-of-base (assoc :scaled (rationalize scale-of-base))))
+         derived (->Derived measure units symb nil)]
      (impl/register-unit! derived)
      (fn
        ([] derived)
@@ -136,9 +140,9 @@
 
 ;; Stupid Length
 (def miles (new-unit :length "mi" 1609.344))
-(def yards (new-unit :length "yd" 0.9144))
-(def feet (new-unit :length "ft" 0.3048))
-(def inches (new-unit :length "in" 0.0254))
+(def yards (new-unit :length "yd" 1250/1367))
+(def feet (new-unit :length "ft" 1250/4101))
+(def inches (new-unit :length "in" 100/3937))
 
 ;; Time
 (def seconds (new-unit :time "s" 1))

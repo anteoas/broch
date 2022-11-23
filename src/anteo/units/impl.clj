@@ -1,14 +1,6 @@
 (ns anteo.units.impl
-  (:import (clojure.lang BigInt)))
-
-(defprotocol IUnit
-  (->measure [this])
-  (->symbol [this])
-  (->number [this])
-  (->units [this])
-  (to-base-number [this])
-  (from-base-number [this n])
-  (with-num [this n]))
+  (:require [anteo.units.protocols :refer [IUnit ->measure ->symbol ->number ->units
+                                           to-base-number from-base-number with-num]]))
 
 (defn unit? [x] (satisfies? IUnit x))
 (defn same-measure? [x y] (and (unit? x) (unit? y) (= (->measure x) (->measure y))))
@@ -27,22 +19,12 @@
     (compare (to-base-number x) (to-base-number y))
     (throw (ex-info "Cannot compare units of different measure." {:x x :y y}))))
 
-(defn- downcast
-  "If BigInt or BigInteger, attempt to cast to long.
-   If Ratio, cast to double. Which might lower precision."
-  [n]
-  (cond
-    (or (instance? BigInt n) (instance? BigInteger n)) (try (long n) (catch Exception _ n))
-    (ratio? n) (double n)
-    :else n))
+(defn- scale [n m] (when n (* n m)))
 
-(defn- scale
-  "Perform f on n in \"rational space\". "
-  [n f] (when n (downcast (f (rationalize n)))))
-
-(defn- rationalize-op
-  "Perform op in \"rational space\". "
-  [op] (fn [x y] (downcast (op (rationalize x) (rationalize y)))))
+(defn attempt-rationalize [n]
+  (try (rationalize n)
+       (catch NumberFormatException _
+         n)))
 
 ;; Basic Unit
 
@@ -60,9 +42,9 @@
   (->number [_] number)
   (->symbol [_] symb)
   (->units [this] {(with-num this nil) 1})
-  (to-base-number [_] (scale number #(* % scale-of-base)))
-  (from-base-number [this n] (with-num this (scale n #(/ % scale-of-base))))
-  (with-num [_ n] (new Unit measure symb scale-of-base n)))
+  (to-base-number [_] (scale number scale-of-base))
+  (from-base-number [this n] (with-num this (scale n (/ 1 scale-of-base))))
+  (with-num [_ n] (new Unit measure symb scale-of-base (attempt-rationalize n))))
 
 
 ;; Derived Unit
@@ -74,7 +56,7 @@
   [(mapcat (fn [[k v]] (repeat v k)) (numerators units))
    (mapcat (fn [[k v]] (repeat (- v) k)) (denominators units))])
 
-(deftype Derived [measure units symb scale-of-base number]
+(deftype Derived [measure units symb number]
   Object
   (toString [_] (str number))
   (hashCode [this] (hash-unit this))
@@ -87,33 +69,39 @@
   (->measure [_] measure)
   (->number [_] number)
   (->symbol [_] symb)
-  (->units [_] (cond-> units
-                 scale-of-base (merge {:scaled scale-of-base})))
-  (to-base-number [_] (let [[numerators denominators] (repeated-numer-denom units)]
+  (->units [_] units)
+  (to-base-number [_] (let [scale-of-base (:scaled units)
+                            [numerators denominators] (repeated-numer-denom (dissoc units :scaled))]
                         (as-> number $
                               (reduce (fn [n u] (to-base-number (with-num u n))) $ numerators)
                               (reduce (fn [n u] (->number (from-base-number u n))) $ denominators)
-                              (scale $ #(* % (or scale-of-base 1))))))
-  (from-base-number [this n] (let [[numerators denominators] (repeated-numer-denom units)]
+                              (scale $ (or scale-of-base 1)))))
+  (from-base-number [this n] (let [scale-of-base (:scaled units)
+                                   [numerators denominators] (repeated-numer-denom (dissoc units :scaled))]
                                (as-> n $
                                      (reduce (fn [n u] (->number (from-base-number u n))) $ numerators)
                                      (reduce (fn [n u] (to-base-number (with-num u n))) $ denominators)
-                                     (scale $ #(/ % (or scale-of-base 1)))
+                                     (scale $ (/ 1 (or scale-of-base 1)))
                                      (with-num this $))))
-  (with-num [_ n] (new Derived measure units symb scale-of-base n)))
+  (with-num [_ n] (new Derived measure units symb (attempt-rationalize n))))
 
 
 ;; Registry
 
-(def symbol-reg (atom {}))
-(def unit-reg (atom {}))
+(defonce symbol-reg (atom {}))
+(defonce unit-reg (atom {}))
+
+(def ^:dynamic *warn-on-symbol-collision* true)
+
+(defn warn-on-collision! [unit]
+  (when (and *warn-on-symbol-collision* (@symbol-reg (->symbol unit)))
+    (binding [*out* *err*]
+      (println "WARN: a unit with symbol" (->symbol unit) "already exists! Overriding"))))
 
 (defn register-unit! [unit]
+  (warn-on-collision! unit)
   (swap! unit-reg assoc (->units unit) unit)
-  (if (@symbol-reg (->symbol unit))
-    (binding [*out* *err*]
-      (println "WARN: a unit with symbol" (->symbol unit) "already exists!"))
-    (swap! symbol-reg assoc (->symbol unit) unit)))
+  (swap! symbol-reg assoc (->symbol unit) unit))
 
 
 ;; Operations
@@ -126,19 +114,16 @@
          (filter (comp not zero? second))
          (into {}))))
 
-(defn do-op [op x y]
-  ((rationalize-op op) x y))
-
 (defn attempt-derivation [x y op]
   (let [derived-units (derive-units x y op)]
     (cond
-      (empty? derived-units) (do-op op (->number x) (->number y))
+      (empty? derived-units) (op (->number x) (->number y))
 
       (@unit-reg derived-units)
-      (from-base-number (@unit-reg derived-units) (do-op op (to-base-number x) (to-base-number y)))
+      (from-base-number (@unit-reg derived-units) (op (to-base-number x) (to-base-number y)))
 
       (@unit-reg (dissoc derived-units :scaled))
-      (from-base-number (@unit-reg (dissoc derived-units :scaled)) (do-op op (to-base-number x) (to-base-number y)))
+      (from-base-number (@unit-reg (dissoc derived-units :scaled)) (op (to-base-number x) (to-base-number y)))
 
       :else (throw (ex-info (str "No derived unit is registered for " derived-units) derived-units)))))
 
@@ -148,10 +133,10 @@
     (op x y)
 
     (and (unit? x) (number? y))
-    (with-num x (do-op op (->number x) y))
+    (with-num x (op (->number x) y))
 
     (and (number? x) (unit? y))
-    (with-num y (do-op op x (->number y)))
+    (with-num y (op x (->number y)))
 
     (or (= op *) (= op /))
     (if (and (same-measure? x y) (not (same-unit? x y)))
@@ -160,7 +145,7 @@
 
     (or (= op +) (= op -))
     (if (same-measure? x y)
-      (from-base-number x (do-op op (to-base-number x) (to-base-number y)))
+      (from-base-number x (op (to-base-number x) (to-base-number y)))
       (throw (ex-info (str "Cannot add/subtract " (->measure x) " and " (->measure y)) {:from x :to y})))
 
     :else (throw (ex-info "Unsupported operation." {:op op :x x :y y}))))
@@ -194,9 +179,11 @@
   (let [units (update-keys units #(if (fn? %) (%) %))]
     (->> units
          (reduce (fn [acc [k v]]
-                   (merge-with + acc
-                               (if (instance? Derived k)
-                                 (ensure-basic (update-vals (->units k) #(* % v)))
-                                 {k v})))
+                   (if (= :scaled k)
+                     (merge-with * acc {k v})
+                     (merge-with + acc
+                                 (if (instance? Derived k)
+                                   (ensure-basic (update-vals (->units k) #(* % v)))
+                                   {k v}))))
                  {}))))
 
