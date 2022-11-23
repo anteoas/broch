@@ -1,11 +1,13 @@
-(ns anteo.units
+(ns anteo.broch
   (:refer-clojure :exclude [* + - / < <= > >= num symbol])
-  (:require [anteo.units.impl :as impl :refer [->Unit ->Derived]]
-            [anteo.units.protocols :as p]
-            [anteo.units.data :as data]))
+  (:require [anteo.broch.impl :as impl :refer [->Unit ->Derived]]
+            [anteo.broch.protocols :as p]
+            [anteo.broch.data :as data]))
 
+;;
 ;; Operations on Units
 ;; most of these also work on numbers directly
+;;
 
 (defn unit?
   "Is this a unit?"
@@ -99,11 +101,13 @@
 (defn from-edn [x] (data/from-edn x))
 (defn to-edn [u] (data/to-edn u))
 
-;; Defining units
+;;
+;; Creating units
+;;
 
 (defn new-unit
-  "Register a new unit with given measure symbol and scaling.
-  Returns a unit-fn (fn [number]) that creates a new unit from a number."
+  "Register a new type of unit with the given measure, symbol and scaling.
+  Returns a fn (fn [number]) that creates a new unit of this type."
   [measure symb scale-of-base]
   {:pre  [(keyword? measure) (string? symb) (number? scale-of-base)]
    :post [(fn? %)]}
@@ -114,8 +118,8 @@
       ([x] (impl/new-unit unit x)))))
 
 (defn new-derived
-  "Register a new derived unit with the given measure and unit composition as a map of unit-fns to exponents.
-  Returns a unit-fn (fn [number]) that creates a new unit from a number."
+  "Register a new type of derived unit with the given measure, symbol, unit composition, and optional scaling.
+  Returns a fn (fn [number]) that creates a new unit of this type."
   [measure units symb scale-of-base]
   {:pre  [(keyword? measure) (map? units) (string? symb) (or (nil? scale-of-base) (number? scale-of-base))]
    :post [(fn? %)]}
@@ -136,6 +140,9 @@
   ([unit-fn-name measure units symb scale-of-base]
    `(def ~unit-fn-name (new-derived ~measure ~units ~symb ~scale-of-base))))
 
+;;
+;; Unit definitions
+;;
 
 ;; Length
 (defunit millimeters :length "mm" 1/1000)

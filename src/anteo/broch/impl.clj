@@ -1,5 +1,5 @@
-(ns anteo.units.impl
-  (:require [anteo.units.protocols :refer [IUnit ->measure ->symbol ->number ->units
+(ns anteo.broch.impl
+  (:require [anteo.broch.protocols :refer [IUnit ->measure ->symbol ->number ->units
                                            to-base-number from-base-number with-num]]))
 
 (defn unit? [x] (satisfies? IUnit x))
@@ -96,7 +96,7 @@
 (defn warn-on-collision! [unit]
   (when (and *warn-on-symbol-collision* (@symbol-reg (->symbol unit)))
     (binding [*out* *err*]
-      (println "WARN: a unit with symbol" (->symbol unit) "already exists! Overriding"))))
+      (println "WARN: a unit with symbol" (->symbol unit) "already exists! Overriding..."))))
 
 (defn register-unit! [unit]
   (warn-on-collision! unit)

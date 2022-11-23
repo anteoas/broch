@@ -1,4 +1,4 @@
-(ns anteo.units.protocols)
+(ns anteo.broch.protocols)
 
 (defprotocol IUnit
   (->measure [this])

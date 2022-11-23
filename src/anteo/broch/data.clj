@@ -1,8 +1,8 @@
-(ns anteo.units.data
-  (:require [anteo.units.impl :as impl]
-            [anteo.units.protocols :as p]
+(ns anteo.broch.data
+  (:require [anteo.broch.impl :as impl]
+            [anteo.broch.protocols :as p]
             [clojure.core.protocols :as core-protocols])
-  (:import (anteo.units.impl Derived Unit)
+  (:import (anteo.broch.impl Derived Unit)
            (clojure.lang BigInt)
            (java.io Writer)))
 
@@ -19,7 +19,7 @@
     (p/with-num (@impl/symbol-reg s) n)
     (throw (ex-info (str "Symbol " s " not registered!") {:number n :symbol s :registry @impl/symbol-reg}))))
 (defn to-edn [u] [(downcast (p/->number u)) (p/->symbol u)])
-(defn- print-unit [u] (str "#unit/u" (to-edn u)))
+(defn- print-unit [u] (str "#broch/unit" (to-edn u)))
 (defmethod print-method Unit [u ^Writer w] (.write w ^String (print-unit u)))
 (defmethod print-dup Unit [u ^Writer w] (.write w ^String (print-unit u)))
 (defmethod print-method Derived [d ^Writer w] (.write w ^String (print-unit d)))
