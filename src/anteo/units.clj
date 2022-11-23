@@ -104,110 +104,117 @@
 (defn new-unit
   "Register a new unit with given measure symbol and scaling.
   Returns a unit-fn (fn [number]) that creates a new unit from a number."
-  ([measure symb] (new-unit measure symb nil))
-  ([measure symb scale-of-base]
-   {:pre  [(keyword? measure) (string? symb) (or (nil? scale-of-base) (number? scale-of-base))]
-    :post [(fn? %)]}
-   (let [unit (->Unit measure symb (rationalize (or scale-of-base 1)) nil)]
-     (impl/register-unit! unit)
-     (fn
-       ([] unit)
-       ([x] (impl/new-unit unit x))))))
+  [measure symb scale-of-base]
+  {:pre  [(keyword? measure) (string? symb) (number? scale-of-base)]
+   :post [(fn? %)]}
+  (let [unit (->Unit measure symb (rationalize scale-of-base) nil)]
+    (impl/register-unit! unit)
+    (fn
+      ([] unit)
+      ([x] (impl/new-unit unit x)))))
 
 (defn new-derived
   "Register a new derived unit with the given measure and unit composition as a map of unit-fns to exponents.
   Returns a unit-fn (fn [number]) that creates a new unit from a number."
-  ([measure units symb] (new-derived measure units symb nil))
-  ([measure units symb scale-of-base]
-   {:pre  [(keyword? measure) (map? units) (string? symb) (or (nil? scale-of-base) (number? scale-of-base))]
-    :post [(fn? %)]}
-   (let [units (impl/ensure-basic (cond-> units
-                                    scale-of-base (assoc :scaled (rationalize scale-of-base))))
-         derived (->Derived measure units symb nil)]
-     (impl/register-unit! derived)
-     (fn
-       ([] derived)
-       ([x] (impl/new-unit derived x))))))
+  [measure units symb scale-of-base]
+  {:pre  [(keyword? measure) (map? units) (string? symb) (or (nil? scale-of-base) (number? scale-of-base))]
+   :post [(fn? %)]}
+  (let [units   (impl/ensure-basic (cond-> units
+                                     scale-of-base (assoc :scaled (rationalize scale-of-base))))
+        derived (->Derived measure units symb nil)]
+    (impl/register-unit! derived)
+    (fn
+      ([] derived)
+      ([x] (impl/new-unit derived x)))))
+
+(defmacro defunit [unit-fn-name measure symb scale-of-base]
+  `(def ~unit-fn-name (new-unit ~measure ~symb ~scale-of-base)))
+
+(defmacro defderived
+  ([unit-fn-name measure units symb]
+   `(def ~unit-fn-name (new-derived ~measure ~units ~symb nil)))
+  ([unit-fn-name measure units symb scale-of-base]
+   `(def ~unit-fn-name (new-derived ~measure ~units ~symb ~scale-of-base))))
 
 
 ;; Length
-(def millimeters (new-unit :length "mm" 1/1000))
-(def centimeters (new-unit :length "cm" 1/100))
-(def decimeters (new-unit :length "dm" 1/10))
-(def meters (new-unit :length "m" 1))
-(def kilometers (new-unit :length "km" 1000))
-(def nautical-miles (new-unit :length "NM" 1852))
+(defunit millimeters :length "mm" 1/1000)
+(defunit centimeters :length "cm" 1/100)
+(defunit decimeters :length "dm" 1/10)
+(defunit meters :length "m" 1)
+(defunit kilometers :length "km" 1000)
+(defunit nautical-miles :length "NM" 1852)
 
 ;; Stupid Length
-(def miles (new-unit :length "mi" 1609.344))
-(def yards (new-unit :length "yd" 1250/1367))
-(def feet (new-unit :length "ft" 1250/4101))
-(def inches (new-unit :length "in" 100/3937))
+(defunit miles :length "mi" 1609.344)
+(defunit yards :length "yd" 1250/1367)
+(defunit feet :length "ft" 1250/4101)
+(defunit inches :length "in" 100/3937)
 
 ;; Time
-(def seconds (new-unit :time "s" 1))
-(def minutes (new-unit :time "min" 60))
-(def hours (new-unit :time "h" 3600))
+(defunit seconds :time "s" 1)
+(defunit minutes :time "min" 60)
+(defunit hours :time "h" 3600)
 
 ;; Mass
-(def grams (new-unit :mass "g" 1/1000))
-(def kilograms (new-unit :mass "kg" 1))
-(def tonnes (new-unit :mass "t" 1000))
+(defunit grams :mass "g" 1/1000)
+(defunit kilograms :mass "kg" 1)
+(defunit tonnes :mass "t" 1000)
 
-(def kilograms-per-second (new-derived :mass-rate {kilograms 1 seconds -1} "kg/s"))
-(def kilograms-per-hour (new-derived :mass-rate {kilograms 1 hours -1} "kg/h"))
-(def tonnes-per-hour (new-derived :mass-rate {tonnes 1 hours -1} "t/h"))
+(defderived kilograms-per-second :mass-rate {kilograms 1 seconds -1} "kg/s")
+(defderived kilograms-per-hour :mass-rate {kilograms 1 hours -1} "kg/h")
+(defderived tonnes-per-hour :mass-rate {tonnes 1 hours -1} "t/h")
 
 ;; Other SI
-(def kelvin (new-unit :thermodynamic-temperature "K" 1))
-(def amperes (new-unit :electric-current "A" 1))
-(def moles (new-unit :amount-of-substance "mol" 1))
-(def candelas (new-unit :luminous-intensity "cd" 1))
+(defunit kelvin :thermodynamic-temperature "K" 1)
+(defunit amperes :electric-current "A" 1)
+(defunit moles :amount-of-substance "mol" 1)
+(defunit candelas :luminous-intensity "cd" 1)
 
 ;; Area
-(def squared-millimeters (new-derived :area {millimeters 2} "mm²"))
-(def squared-centimeters (new-derived :area {centimeters 2} "cm²"))
-(def squared-decimeters (new-derived :area {decimeters 2} "dm²"))
-(def squared-meters (new-derived :area {meters 2} "m²"))
-(def squared-kilometers (new-derived :area {kilometers 2} "km²"))
-(def squared-miles (new-derived :area {miles 2} "mi²"))
-(def squared-yards (new-derived :area {yards 2} "yd²"))
-(def squared-feet (new-derived :area {feet 2} "ft²"))
-(def squared-inches (new-derived :area {inches 2} "in²"))
+(defderived squared-millimeters :area {millimeters 2} "mm²")
+(defderived squared-centimeters :area {centimeters 2} "cm²")
+(defderived squared-decimeters :area {decimeters 2} "dm²")
+(defderived squared-meters :area {meters 2} "m²")
+(defderived squared-kilometers :area {kilometers 2} "km²")
+(defderived squared-miles :area {miles 2} "mi²")
+(defderived squared-yards :area {yards 2} "yd²")
+(defderived squared-feet :area {feet 2} "ft²")
+(defderived squared-inches :area {inches 2} "in²")
 
 ;; Volume
-(def cubed-millimeters (new-derived :volume {millimeters 3} "cm³"))
-(def cubed-centimeters (new-derived :volume {centimeters 3} "dm³"))
-(def cubed-meters (new-derived :volume {meters 3} "m³"))
-(def cubed-kilometers (new-derived :volume {kilometers 3} "km³"))
-(def cubed-miles (new-derived :volume {miles 3} "mi³"))
-(def cubed-yards (new-derived :volume {yards 3} "yd³"))
-(def cubed-feet (new-derived :volume {feet 3} "ft³"))
-(def cubed-inches (new-derived :volume {inches 3} "in³"))
+(defderived cubed-millimeters :volume {millimeters 3} "cm³")
+(defderived cubed-centimeters :volume {centimeters 3} "dm³")
+(defderived cubed-meters :volume {meters 3} "m³")
+(defderived cubed-kilometers :volume {kilometers 3} "km³")
+(defderived cubed-miles :volume {miles 3} "mi³")
+(defderived cubed-yards :volume {yards 3} "yd³")
+(defderived cubed-feet :volume {feet 3} "ft³")
+(defderived cubed-inches :volume {inches 3} "in³")
 
-(def liters (new-derived :volume {decimeters 3} "l"))
-(def deciliters (new-derived :volume {liters 1} "dl" 1/10))
-(def centiliters (new-derived :volume {liters 1} "cl" 1/100))
+(defderived liters :volume {decimeters 3} "l")
+(defderived deciliters :volume {liters 1} "dl" 1/10)
+(defderived centiliters :volume {liters 1} "cl" 1/100)
 
-(def liters-per-hour (new-derived :volume-rate {liters 1 hours -1} "l/h"))
-(def liters-per-second (new-derived :volume-rate {liters 1 seconds -1} "l/s"))
+(defderived liters-per-hour :volume-rate {liters 1 hours -1} "l/h")
+(defderived liters-per-second :volume-rate {liters 1 seconds -1} "l/s")
 
 ;; Speed
-(def kilometers-per-hour (new-derived :speed {kilometers 1 hours -1} "km/h"))
-(def meters-per-second (new-derived :speed {meters 1 seconds -1} "m/s"))
-(def miles-per-hour (new-derived :speed {miles 1 hours -1} "mi/h"))
-(def knots (new-derived :speed {nautical-miles 1 hours -1} "kn"))
+(defderived kilometers-per-hour :speed {kilometers 1 hours -1} "km/h")
+(defderived meters-per-second :speed {meters 1 seconds -1} "m/s")
+(defderived miles-per-hour :speed {miles 1 hours -1} "mi/h")
+(defderived knots :speed {nautical-miles 1 hours -1} "kn")
 
 ;; Acceleration
-(def meters-per-second2 (new-derived :acceleration {meters 1 seconds -2} "m/s²"))
+(defderived meters-per-second2 :acceleration {meters 1 seconds -2} "m/s²")
 
 ;; Force
-(def newtons (new-derived :force {kilograms 1 meters 1 seconds -2} "N"))
+(defderived newtons :force {kilograms 1 meters 1 seconds -2} "N")
 
 ;; Power & Energy
-(def joules (new-derived :energy {newtons 1 meters 1} "J"))
-(def watts (new-derived :power {joules 1 seconds -1} "W"))
-(def kilowatts (new-derived :power {watts 1} "kW" 1000))
-(def watt-hours (new-derived :energy {watts 1 hours 1} "Wh"))
-(def kilowatt-hours (new-derived :energy {watts 1 hours 1} "kWh" 1000))
+(defderived joules :energy {newtons 1 meters 1} "J")
+(defderived watts :power {joules 1 seconds -1} "W")
+(defderived kilowatts :power {watts 1} "kW" 1000)
+(defderived watt-hours :energy {watts 1 hours 1} "Wh")
+(defderived kilowatt-hours :energy {watts 1 hours 1} "kWh" 1000)
 
