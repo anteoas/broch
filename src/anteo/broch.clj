@@ -1,5 +1,5 @@
 (ns anteo.broch
-  (:refer-clojure :exclude [* + - / < <= > >= num symbol])
+  (:refer-clojure :exclude [* + - / < <= > >= num symbol min max])
   (:require [anteo.broch.impl :as impl :refer [->Unit ->Derived]]
             [anteo.broch.protocols :as p]
             [anteo.broch.data :as data]))
@@ -56,6 +56,16 @@
   ([x] x)
   ([x y] (impl/boxed-arithmetic x y clojure.core//))
   ([x y & more] (reduce / (/ x y) more)))
+
+(defn min
+  ([x] x)
+  ([x y] (impl/boxed-arithmetic x y clojure.core/min))
+  ([x y & more] (reduce min (min x y) more)))
+
+(defn max
+  ([x] x)
+  ([x y] (impl/boxed-arithmetic x y clojure.core/max))
+  ([x y & more] (reduce max (max x y) more)))
 
 (defn <
   ([_] true)

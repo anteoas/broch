@@ -95,6 +95,19 @@
   (is (thrown? IllegalArgumentException (b/with-num 1 123))))
 
 
+(deftest min-max
+  (is (= (b/meters 10) (b/min (b/meters 10))))
+  (is (= (b/meters 7) (b/min (b/meters 10) (b/meters 7))))
+  (is (= (b/meters 7) (b/min (b/meters 10) 7)))
+
+  (is (= (b/meters 10) (b/max (b/meters 10))))
+  (is (= (b/meters 10) (b/max (b/meters 10) (b/meters 7))))
+  (is (= (b/meters 10) (b/max (b/meters 10) 7)))
+
+  (is (= (b/meters 10) (b/min (b/meters 10) (b/max (b/kilometers 7) (b/meters 8)))))
+  (is (= (b/kilometers 7) (b/max (b/meters 10) (b/kilometers 7) 88)))
+  )
+
 ;; TODO (/ #broch/unit[12 "J"] #broch/unit[1 "km"])
 
 (comment

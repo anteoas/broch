@@ -143,7 +143,7 @@
       (attempt-derivation x (convert y x) op)
       (attempt-derivation x y op))
 
-    (or (= op +) (= op -))
+    (or (= op +) (= op -) (= op min) (= op max))
     (if (same-measure? x y)
       (from-base-number x (op (to-base-number x) (to-base-number y)))
       (throw (ex-info (str "Cannot add/subtract " (->measure x) " and " (->measure y)) {:from x :to y})))
