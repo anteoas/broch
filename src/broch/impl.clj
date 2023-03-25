@@ -1,143 +1,160 @@
 (ns broch.impl
-  (:require [broch.protocols :refer [->measure ->number ->symbol ->units IUnit
-                                     from-base-number to-base-number with-num]]))
+  (:refer-clojure :exclude [symbol])
+  (:require [broch.protocols :refer [IQuantity composition measure number symbol]]))
 
-(defn unit? [x] (satisfies? IUnit x))
-(defn same-measure? [x y] (and (unit? x) (unit? y) (= (->measure x) (->measure y))))
-(defn same-unit? [x y] (and (same-measure? x y) (= (->symbol x) (->symbol y))))
-(defn- convert [a b] (from-base-number b (to-base-number a)))
+(defn quantity? [x] (satisfies? IQuantity x))
+(defn same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
+(defn same-unit? [x y] (and (same-measure? x y) (= (symbol x) (symbol y))))
 
-(defn- hash-unit [u] (hash {:measure (->measure u) :symb (->symbol u) :number (to-base-number u)}))
-
-(defn- equal-units? [u v]
-  (and (same-measure? u v)
-       (or (and (->number u) (->number v) (== (to-base-number u) (to-base-number v)))
-           (and (nil? (->number u)) (nil? (->number v)) (same-unit? u v)))))
-
-(defn- compare-units [x y]
-  (if (same-measure? x y)
-    (compare (to-base-number x) (to-base-number y))
-    (throw (ex-info (str "Cannot compare units of different measure. " (->measure x) " and " (->measure y) ".")
-                    {:x x :y y}))))
-
-(defn- scale [n m] (when n (* n m)))
-
-(defn attempt-rationalize [n]
-  (try (rationalize n)
-       (catch NumberFormatException _
-         n)))
-
-;; Basic Unit
-
-(deftype Unit [measure symb scale-of-base number]
+(declare ->base)
+(deftype Quantity [-measure -symbol -composition -number]
   Object
-  (toString [_] (str number))
-  (hashCode [this] (hash-unit this))
-  (equals [this other] (equal-units? this other))
+  (toString [_] (str -number " " -symbol))
+  (hashCode [_] (hash {:measure -measure :symbol -symbol :number -number}))
+  (equals [this other]
+    (and (same-measure? this other)
+         (or (and -number (number other) (== (->base this) (->base other)))
+             (and (same-unit? this other) (nil? -number) (nil? (number other))))))
 
   Comparable
-  (compareTo [this other] (compare-units this other))
+  (compareTo [this other]
+    (if (same-measure? this other)
+      (compare (->base this) (->base other))
+      (throw (ex-info (str "Cannot compare units of different measure. " -measure " and " (measure other) ".")
+                      {:x this :y other}))))
 
-  IUnit
-  (->measure [_] measure)
-  (->number [_] number)
-  (->symbol [_] symb)
-  (->units [this] {(with-num this nil) 1})
-  (to-base-number [_] (scale number scale-of-base))
-  (from-base-number [this n] (with-num this (scale n (/ 1 scale-of-base))))
-  (with-num [_ n] (new Unit measure symb scale-of-base (attempt-rationalize n))))
+  IQuantity
+  (measure [_] -measure)
+  (number [_] -number)
+  (symbol [_] -symbol)
+  (composition [this]
+    (if (empty? (dissoc -composition :broch/scaled))
+      (assoc -composition this 1)
+      -composition)))
 
+(defn- quantity* [unit n] (->Quantity (measure unit) (symbol unit) (composition unit) n))
+(defn boxed [f q] (quantity* q (f (number q))))
+(defn simple? [q] (empty? (dissoc (composition q) :broch/scaled (quantity* q nil))))
 
-;; Derived Unit
+(defn- pow [n x] (reduce * (repeat x n)))
 
-(defn numerators [units] (filter (comp pos? second) units))
-(defn denominators [units] (filter (comp neg? second) units))
+(defn- scale-of-base [q]
+  (let [{:broch/keys [scaled] :as composition} (composition q)
+        scaled (or (rationalize scaled) 1)]
+    (if (simple? q)
+      scaled
+      (reduce (fn [x [k v]]
+                (if (pos? v)
+                  (* x (pow (scale-of-base k) v))
+                  (/ x (pow (scale-of-base k) (- v)))))
+              scaled
+              (dissoc composition :broch/scaled)))))
 
-(defn- repeated-numer-denom [units]
-  [(mapcat (fn [[k v]] (repeat v k)) (numerators units))
-   (mapcat (fn [[k v]] (repeat (- v) k)) (denominators units))])
+(defn- downcast
+  "Downcast ratio to double and double to long if possible without losing precision."
+  [n]
+  (cond-> n
+    (and (ratio? n) (= n (rationalize (double n)))) (double)
+    (and (or (ratio? n) (float? n)) (= n (long (double n)))) (long)))
 
-(deftype Derived [measure units symb number]
-  Object
-  (toString [_] (str number))
-  (hashCode [this] (hash-unit this))
-  (equals [this other] (equal-units? this other))
+(defn- safe-scale [n m] (when (and n m) (* n m)))
+(defn- ->base [q] (safe-scale (rationalize (number q)) (scale-of-base q)))
+(defn- <-base [q n] (quantity* q (safe-scale n (/ 1 (scale-of-base q)))))
+(defn- convert [a b]
+  (let [converted (<-base b (->base a))]
+    (cond
+      (ratio? (number a)) converted
+      (float? (number a))  (quantity* converted (double (number converted)))
+      :else (quantity* converted (downcast (number converted))))))
 
-  Comparable
-  (compareTo [this other] (compare-units this other))
+(defn quantity
+  [unit x]
+  (cond
+    (nil? x)
+    unit
 
-  IUnit
-  (->measure [_] measure)
-  (->number [_] number)
-  (->symbol [_] symb)
-  (->units [_] units)
-  (to-base-number [_] (let [scale-of-base (:scaled units)
-                            [numerators denominators] (repeated-numer-denom (dissoc units :scaled))]
-                        (as-> number $
-                              (reduce (fn [n u] (to-base-number (with-num u n))) $ numerators)
-                              (reduce (fn [n u] (->number (from-base-number u n))) $ denominators)
-                              (scale $ (or scale-of-base 1)))))
-  (from-base-number [this n] (let [scale-of-base (:scaled units)
-                                   [numerators denominators] (repeated-numer-denom (dissoc units :scaled))]
-                               (as-> n $
-                                     (reduce (fn [n u] (->number (from-base-number u n))) $ numerators)
-                                     (reduce (fn [n u] (to-base-number (with-num u n))) $ denominators)
-                                     (scale $ (/ 1 (or scale-of-base 1)))
-                                     (with-num this $))))
-  (with-num [_ n] (new Derived measure units symb (attempt-rationalize n))))
+    (number? x)
+    (quantity* unit x)
 
+    (string? x)
+    (let [n (read-string x)]
+      (if (number? n)
+        (quantity* unit n)
+        (throw (ex-info (str "Must be a number: " x) {:number x}))))
 
-;; Registry
+    (quantity? x)
+    (if (same-measure? x unit)
+      (convert x unit)
+      (throw (ex-info (str "Cannot convert a quantity of " (measure x) " into a quantity of" (measure unit))
+                      {:from x :to unit})))
 
-(defonce symbol-reg (atom {}))
-(defonce unit-reg (atom {}))
+    :else (throw (ex-info "Unhandled case." {:unit unit :x x}))))
+
+(defn ensure-basic [comp]
+  (->> (update-keys comp #(if (fn? %) (%) %))
+       (reduce (fn [acc [k v]]
+                 (if (= :broch/scaled k)
+                   (merge-with * acc {k v})
+                   (merge-with + acc
+                               (if (simple? k)
+                                 {k v}
+                                 (ensure-basic (update-vals (composition k) #(* % v)))))))
+               {})))
+
+(defn unit [measure symbol composition]
+  (->Quantity measure symbol (ensure-basic composition) nil))
+
+(defonce symbol-registry (atom {}))
+(defonce composition-registry (atom {}))
 
 (def ^:dynamic *warn-on-symbol-collision* true)
 
 (defn warn-on-collision! [unit]
-  (when (and *warn-on-symbol-collision* (@symbol-reg (->symbol unit)))
+  (when (@symbol-registry (symbol unit))
     (binding [*out* *err*]
-      (println "WARN: a unit with symbol" (->symbol unit) "already exists! Overriding..."))))
+      (println "WARN: a unit with symbol" (symbol unit) "already exists! Overriding..."))))
 
 (defn register-unit! [unit]
-  (warn-on-collision! unit)
-  (swap! unit-reg assoc (->units unit) unit)
-  (swap! symbol-reg assoc (->symbol unit) unit))
+  (when *warn-on-symbol-collision* (warn-on-collision! unit))
+  (swap! composition-registry (fn [reg] (merge {(composition unit) unit}
+                                               {(dissoc (composition unit) :broch/scaled) unit}
+                                               reg)))
+  (swap! symbol-registry assoc (symbol unit) unit))
 
-
-;; Operations
-
-(defn- derive-units [x y op]
-  (let [units-x (->units x)
-        units-y (cond-> (->units y)
-                  (= / op) (update-vals -))]
-    (->> (merge-with + units-x units-y)
-         (filter (comp not zero? second))
-         (into {}))))
+(defn- derive-comp [x y op]
+  (->> (reduce (fn [acc [k v]]
+                 (cond
+                   (and (= / op) (= :broch/scaled k)) (merge-with * acc {k (/ 1 v)})
+                   (= :broch/scaled k) (merge-with * acc {k v})
+                   (= / op) (merge-with + acc {k (- v)})
+                   :else (merge-with + acc {k v})))
+               (composition x) (composition y))
+       (filter (comp not zero? second))
+       (into {})))
 
 (defn attempt-derivation [x y op]
-  (let [derived-units (derive-units x y op)]
+  (let [derived-comp (derive-comp x y op)]
     (cond
-      (empty? derived-units) (op (->number x) (->number y))
+      (empty? derived-comp) (op (number x) (number y))
 
-      (@unit-reg derived-units)
-      (from-base-number (@unit-reg derived-units) (op (to-base-number x) (to-base-number y)))
+      (@composition-registry derived-comp)
+      (<-base (@composition-registry derived-comp) (op (->base x) (->base y)))
 
-      (@unit-reg (dissoc derived-units :scaled))
-      (from-base-number (@unit-reg (dissoc derived-units :scaled)) (op (to-base-number x) (to-base-number y)))
+      (@composition-registry (dissoc derived-comp :broch/scaled))
+      (<-base (@composition-registry (dissoc derived-comp :broch/scaled)) (op (->base x) (->base y)))
 
-      :else (throw (ex-info (str "No derived unit is registered for " derived-units) derived-units)))))
+      :else (throw (ex-info (str "No unit is registered for " derived-comp) derived-comp)))))
 
 (defn boxed-arithmetic [x y op]
   (cond
     (and (number? x) (number? y))
     (op x y)
 
-    (and (unit? x) (number? y))
-    (with-num x (op (->number x) y))
+    (and (quantity? x) (number? y))
+    (quantity x (op (number x) y))
 
-    (and (number? x) (unit? y))
-    (with-num y (op x (->number y)))
+    (and (number? x) (quantity? y))
+    (quantity y (op x (number y)))
 
     (or (= op *) (= op /))
     (if (and (same-measure? x y) (not (same-unit? x y)))
@@ -146,45 +163,7 @@
 
     (or (= op +) (= op -) (= op min) (= op max))
     (if (same-measure? x y)
-      (from-base-number x (op (to-base-number x) (to-base-number y)))
-      (throw (ex-info (str "Cannot add/subtract " (->measure x) " and " (->measure y)) {:from x :to y})))
+      (<-base x (op (->base x) (->base y)))
+      (throw (ex-info (str "Cannot add/subtract " (measure x) " and " (measure y)) {:from x :to y})))
 
     :else (throw (ex-info "Unsupported operation." {:op op :x x :y y}))))
-
-
-;; Construction
-
-(defn new-unit [new-u x]
-  (cond
-    (nil? x)
-    new-u
-
-    (number? x)
-    (with-num new-u x)
-
-    (string? x)
-    (let [n (read-string x)]
-      (if (number? n)
-        (with-num new-u n)
-        (throw (ex-info (str "Can't make units with other things than numbers: " x) {:x x}))))
-
-    (unit? x)
-    (if (same-measure? x new-u)
-      (convert x new-u)
-      (throw (ex-info (str "Cannot convert a " (->measure x) " into " (->measure new-u))
-                      {:from x :to new-u})))
-
-    :else (throw (ex-info "Unhandled case." {:unit new-u :x x}))))
-
-(defn ensure-basic [units]
-  (let [units (update-keys units #(if (fn? %) (%) %))]
-    (->> units
-         (reduce (fn [acc [k v]]
-                   (if (= :scaled k)
-                     (merge-with * acc {k v})
-                     (merge-with + acc
-                                 (if (instance? Derived k)
-                                   (ensure-basic (update-vals (->units k) #(* % v)))
-                                   {k v}))))
-                 {}))))
-

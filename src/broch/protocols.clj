@@ -1,10 +1,9 @@
-(ns broch.protocols)
+(ns broch.protocols
+  (:refer-clojure :exclude [symbol]))
 
-(defprotocol IUnit
-  (->measure [this])
-  (->symbol [this])
-  (->number [this])
-  (->units [this])
-  (to-base-number [this])
-  (from-base-number [this n])
+(defprotocol IQuantity
+  (measure [this])
+  (symbol [this])
+  (number [this])
+  (composition [this])
   (with-num [this n]))

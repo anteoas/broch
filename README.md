@@ -21,25 +21,25 @@ The ergonomics for handling units is inspired by the excellent
   (:require [broch.core :as b]))
 
 ; making a unit
-(b/meters 10) ;=> #broch/unit[10 "m"]
+(b/meters 10) ;=> #broch/quantity[10 "m"]
 
 ; data literals
-#broch/unit[10 "m"] ;=> #broch/unit[10 "m"]
+#broch/quantity[10 "m"] ;=> #broch/quantity[10 "m"]
 
 ; the unit fns also convert units if compatible
-(b/feet #broch/unit[10 "m"]) ;=> #broch/unit[32.80839895013123 "ft"]
+(b/feet #broch/quantity[10 "m"]) ;=> #broch/quantity[32.80839895013123 "ft"]
 
 ; but conversion of incompatible units throw an error
 (b/meters (b/seconds 3)) ;=> ExceptionInfo "Cannot convert from :time to :length"
 
 ; you can compare compatible units
-(b/> #broch/unit[1 "km"] #broch/unit[999 "m"]) ;=> true
+(b/> #broch/quantity[1 "km"] #broch/quantity[999 "m"]) ;=> true
 
 ; and do arithmetic
-(b/- #broch/unit[1 "km"] #broch/unit[1 "mi"]) ;=> #broch/unit[-0.6093440000000001 "km"]
+(b/- #broch/quantity[1 "km"] #broch/quantity[1 "mi"]) ;=> #broch/quantity[-0.6093440000000001 "km"]
 
 ; and, again, we get sensible errors if incompatible
-(b/- #broch/unit[2 "km"] #broch/unit[1 "s"]) ;=> ExceptionInfo "Cannot add/subtract :length and :time"
+(b/- #broch/quantity[2 "km"] #broch/quantity[1 "s"]) ;=> ExceptionInfo "Cannot add/subtract :length and :time"
 ```
 
 ### Derived units
@@ -51,19 +51,19 @@ The ergonomics for handling units is inspired by the excellent
 
 ; derived units have a unit composition represented as a map of unit-fn to exponent
 ; as we all remember from school, a Watt is kg·m²/s³
-(p/->units (b/watts 4)) ;=> {#broch/unit[nil "kg"] 1, #broch/unit[nil "m"] 2, #broch/unit[nil "s"] -3}
+(p/composition (b/watts 4)) ;=> {#broch/quantity[nil "kg"] 1, #broch/quantity[nil "m"] 2, #broch/quantity[nil "s"] -3}
 
 ; this allows more complicated arithmetic (* and /) to derive the correct unit if defined
-(b/* #broch/unit[3 "m/s²"] #broch/unit[3 "s"]) ;=> #broch/unit[9 "m/s"]
-(b/* #broch/unit[12 "kW"] #broch/unit[5 "h"]) ;=> #broch/unit[60 "kWh"]
-(b// #broch/unit[12 "J"] #broch/unit[1 "km"]) ;=> #broch/unit[0.12 "N"]
+(b/* #broch/quantity[3 "m/s²"] #broch/quantity[3 "s"]) ;=> #broch/quantity[9 "m/s"]
+(b/* #broch/quantity[12 "kW"] #broch/quantity[5 "h"]) ;=> #broch/quantity[60 "kWh"]
+(b// #broch/quantity[12 "J"] #broch/quantity[1 "km"]) ;=> #broch/quantity[0.12 "N"]
 
 ; If all units are cancelled out, a number is returned
-(/ #broch/unit[1 "m"] #broch/unit[2 "m"]) ;=> 1/2
+(/ #broch/quantity[1 "m"] #broch/quantity[2 "m"]) ;=> 1/2
 
 ; If no unit of that composition is defined, error
-(/ #broch/unit[1 "m"] #broch/unit[2 "s"]) ;=> #broch/unit[0.5 "m/s"]
-(/ #broch/unit[2 "s"] #broch/unit[1 "m"]) ;=> ExceptionInfo "No derived unit is registered for {#broch/unit[nil "s"] 1, #broch/unit[nil "m"] -1}"
+(/ #broch/quantity[1 "m"] #broch/quantity[2 "s"]) ;=> #broch/quantity[0.5 "m/s"]
+(/ #broch/quantity[2 "s"] #broch/quantity[1 "m"]) ;=> ExceptionInfo "No derived unit is registered for {#broch/quantity[nil "s"] 1, #broch/quantity[nil "m"] -1}"
 ```
 
 ### Defining new units
@@ -75,8 +75,8 @@ But defining your own units is a peace-of-cake.
   (:require [broch.core :as b]))
   
 ; all units have a measure and a symbol 
-(b/measure #broch/unit[1 "m"]) ;=> :speed 
-(b/symbol #broch/unit[1 "m"]) ;=> "m" (same as in the tag literal)
+(b/measure #broch/quantity[1 "m"]) ;=> :speed 
+(b/symbol #broch/quantity[1 "m"]) ;=> "m" (same as in the tag literal)
 
 ; broch uses the measure to know how to convert and derive units
 ; both must be given when defining the unit alogn with it's scale from the "base" unit of that measure
@@ -96,7 +96,7 @@ But defining your own units is a peace-of-cake.
 ; Measures and symbols are just names though, so they could be anything. For example:
 (b/defunit you :coolness "you" 1) ;=> #'myns/you
 (b/defunit rich-hickey :coolness "DJ Rich" 1000) ;=> #'myns/rich-hickey
-(= #broch/unit[1 "DJ Rich"] #broch/unit[1000 "you"]) ;=> true
+(= #broch/quantity[1 "DJ Rich"] #broch/quantity[1000 "you"]) ;=> true
 ```
 
 
