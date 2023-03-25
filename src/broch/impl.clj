@@ -17,7 +17,8 @@
 (defn- compare-units [x y]
   (if (same-measure? x y)
     (compare (to-base-number x) (to-base-number y))
-    (throw (ex-info "Cannot compare units of different measure." {:x x :y y}))))
+    (throw (ex-info (str "Cannot compare units of different measure. " (->measure x) " and " (->measure y) ".")
+                    {:x x :y y}))))
 
 (defn- scale [n m] (when n (* n m)))
 
