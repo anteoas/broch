@@ -2,6 +2,8 @@
   (:require
    [broch.core :as b]
    [broch.data]
+   [broch.impl :as impl]
+   [broch.protocols :as p]
    [clojure.test :refer [are deftest is testing]]
    [clojure.test.check.clojure-test :refer [defspec]]
    [clojure.test.check.generators :as gen]
@@ -72,6 +74,12 @@
       #broch/quantity[2 "J"] (b/* #broch/quantity[1 "N"] #broch/quantity[2 "m"])
       #broch/quantity[0 "m"] (b// 0 #broch/quantity[2 "m"]))))
 
+(deftest advanced-arithmetic
+  (are [x y] (= x y)
+    #broch/quantity[0.012 "N"] (b// #broch/quantity[12 "J"] #broch/quantity[1 "km"])
+    #broch/quantity[12000 "J"] (b/* #broch/quantity[12 "N"] #broch/quantity[1 "km"])
+    #broch/quantity[1/450 "m/s²"] (b// #broch/quantity[8 "m/s"] #broch/quantity[1 "h"])))
+
 (defn- is-NaN?
   "Test if this number is nan"
   [x] (false? (= x x)))                                     ;; Nan is the only value for which equality is false
@@ -116,7 +124,6 @@
   (is (= (b/kilometers 7) (b/max (b/meters 10) (b/kilometers 7) 88)))
   )
 
-; TODO (/ #broch/quantity[12 "J"] #broch/quantity[1 "km"])
 
 (comment
   (clojure.test/run-tests))

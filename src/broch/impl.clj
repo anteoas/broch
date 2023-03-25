@@ -60,11 +60,19 @@
 (defn- safe-scale [n m] (when (and n m) (* n m)))
 (defn- ->base [q] (safe-scale (rationalize (number q)) (scale-of-base q)))
 (defn- <-base [q n] (quantity* q (safe-scale n (/ 1 (scale-of-base q)))))
+
 (defn- convert [a b]
   (let [converted (<-base b (->base a))]
     (cond
       (ratio? (number a)) converted
-      (float? (number a))  (quantity* converted (double (number converted)))
+      (float? (number a)) (quantity* converted (double (number converted)))
+      :else (quantity* converted (downcast (number converted))))))
+
+(defn- converting-op [unit a b op]
+  (let [converted (<-base unit (op (->base a) (->base b)))]
+    (cond
+      (ratio? (number a)) converted
+      (float? (number a)) (quantity* converted (double (number converted)))
       :else (quantity* converted (downcast (number converted))))))
 
 (defn quantity
@@ -114,11 +122,17 @@
     (binding [*out* *err*]
       (println "WARN: a unit with symbol" (symbol unit) "already exists! Overriding..."))))
 
+(defn- measure-composition [unit-composition]
+  (->> (dissoc unit-composition :broch/scaled)
+       (map (fn [[k v]] {(measure k) v}))
+       (apply merge-with +)))
+
 (defn register-unit! [unit]
   (when *warn-on-symbol-collision* (warn-on-collision! unit))
-  (swap! composition-registry (fn [reg] (merge {(composition unit) unit}
-                                               {(dissoc (composition unit) :broch/scaled) unit}
-                                               reg)))
+  (swap! composition-registry (fn [reg]
+                                (merge {(composition unit) unit}
+                                       {(measure-composition (composition unit)) unit}
+                                       reg)))
   (swap! symbol-registry assoc (symbol unit) unit))
 
 (defn- derive-comp [x y op]
@@ -138,10 +152,10 @@
       (empty? derived-comp) (op (number x) (number y))
 
       (@composition-registry derived-comp)
-      (<-base (@composition-registry derived-comp) (op (->base x) (->base y)))
+      (converting-op (@composition-registry derived-comp) x y op)
 
-      (@composition-registry (dissoc derived-comp :broch/scaled))
-      (<-base (@composition-registry (dissoc derived-comp :broch/scaled)) (op (->base x) (->base y)))
+      (@composition-registry (measure-composition derived-comp))
+      (converting-op (@composition-registry (measure-composition derived-comp)) x y op)
 
       :else (throw (ex-info (str "No unit is registered for " derived-comp) derived-comp)))))
 
