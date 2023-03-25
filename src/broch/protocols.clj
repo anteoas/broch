@@ -5,5 +5,4 @@
   (measure [this])
   (symbol [this])
   (number [this])
-  (composition [this])
-  (with-num [this n]))
+  (composition [this]))

@@ -1,6 +1,7 @@
 (ns broch.core-test
   (:require
    [broch.core :as b]
+   [broch.data]
    [clojure.test :refer [are deftest is testing]]
    [clojure.test.check.clojure-test :refer [defspec]]
    [clojure.test.check.generators :as gen]
