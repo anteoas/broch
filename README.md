@@ -18,7 +18,7 @@ The ergonomics for handling units is inspired by the excellent
 ### Basic units
 ```clojure
 (ns myns 
-  (:require [anteo.broch :as b]))
+  (:require [broch.core :as b]))
 
 ; making a unit
 (b/meters 10) ;=> #broch/unit[10 "m"]
@@ -46,8 +46,8 @@ The ergonomics for handling units is inspired by the excellent
 
 ```clojure
 (ns myns
-  (:require [anteo.broch :as b]
-            [anteo.broch.protocols :as p]))
+  (:require [broch.core :as b]
+            [broch.core.protocols :as p]))
 
 ; derived units have a unit composition represented as a map of unit-fn to exponent
 ; as we all remember from school, a Watt is kg·m²/s³
@@ -67,12 +67,12 @@ The ergonomics for handling units is inspired by the excellent
 ```
 
 ### Defining new units
-Broch comes with a bunch of units pre-defined in `anteo.broch` (more will likely be added in time).
+Broch comes with a bunch of units pre-defined in `broch.core` (more will likely be added in time).
 But defining your own units is a peace-of-cake. 
 
 ```clojure
 (ns myns
-  (:require [anteo.broch :as b]))
+  (:require [broch.core :as b]))
   
 ; all units have a measure and a symbol 
 (b/measure #broch/unit[1 "m"]) ;=> :speed 

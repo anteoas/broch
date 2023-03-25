@@ -1,8 +1,8 @@
-(ns anteo.broch
-  (:refer-clojure :exclude [* + - / < <= > >= num symbol min max])
-  (:require [anteo.broch.impl :as impl :refer [->Unit ->Derived]]
-            [anteo.broch.protocols :as p]
-            [anteo.broch.data :as data]))
+(ns broch.core
+  (:refer-clojure :exclude [* + - / < <= > >= max min num symbol])
+  (:require [broch.data :as data]
+            [broch.impl :as impl :refer [->Derived ->Unit]]
+            [broch.protocols :as p]))
 
 ;;
 ;; Operations on Units

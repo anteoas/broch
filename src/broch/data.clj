@@ -1,8 +1,8 @@
-(ns anteo.broch.data
-  (:require [anteo.broch.impl :as impl]
-            [anteo.broch.protocols :as p]
+(ns broch.data
+  (:require [broch.impl :as impl]
+            [broch.protocols :as p]
             [clojure.core.protocols :as core-protocols])
-  (:import (anteo.broch.impl Derived Unit)
+  (:import (broch.impl Derived Unit)
            (clojure.lang BigInt)
            (java.io Writer)))
 

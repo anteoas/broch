@@ -1,6 +1,6 @@
-(ns anteo.broch.impl
-  (:require [anteo.broch.protocols :refer [IUnit ->measure ->symbol ->number ->units
-                                           to-base-number from-base-number with-num]]))
+(ns broch.impl
+  (:require [broch.protocols :refer [->measure ->number ->symbol ->units IUnit
+                                     from-base-number to-base-number with-num]]))
 
 (defn unit? [x] (satisfies? IUnit x))
 (defn same-measure? [x y] (and (unit? x) (unit? y) (= (->measure x) (->measure y))))
@@ -109,7 +109,7 @@
 (defn- derive-units [x y op]
   (let [units-x (->units x)
         units-y (cond-> (->units y)
-                        (= / op) (update-vals -))]
+                  (= / op) (update-vals -))]
     (->> (merge-with + units-x units-y)
          (filter (comp not zero? second))
          (into {}))))

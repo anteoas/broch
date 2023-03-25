@@ -1,14 +1,14 @@
-(ns anteo.broch-test
+(ns broch.core-test
   (:require
-   [anteo.broch.impl :as impl]
-   [clojure.test :refer [deftest testing is are]]
+   [broch.core :as b]
+   [broch.impl :as impl]
+   [clojure.test :refer [are deftest is testing]]
    [clojure.test.check.clojure-test :refer [defspec]]
    [clojure.test.check.generators :as gen]
-   [clojure.test.check.properties :as prop]
-   [anteo.broch :as b]))
+   [clojure.test.check.properties :as prop]))
 
 
-(def unit-fns (->> (ns-interns 'anteo.broch)
+(def unit-fns (->> (ns-interns 'broch.core)
                    (filter (fn [[_ v]]
                              (try (b/unit? (v))
                                   (catch Exception _ false))))
