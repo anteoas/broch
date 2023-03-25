@@ -27,16 +27,25 @@
     "#broch/unit[1/3 \"km\"]" (pr-str (b/kilometers 1/3))))
 
 (deftest api
-  (let [m (b/meters 123)]
-    (is (b/unit? m))
-    (are [x y] (= x y)
-      :length (b/measure m)
-      "m" (b/symbol m)
-      123 (b/num m)
-      1234 (b/num (b/with-num m 1234))
-      #broch/unit[124 "m"] ((b/box inc) m)
-      (b/from-edn [123 "m"]) m
-      [123 "m"] (b/to-edn m))))
+  (testing "for units"
+    (let [m (b/meters 123)]
+      (is (b/unit? m))
+      (are [x y] (= x y)
+        :length (b/measure m)
+        "m" (b/symbol m)
+        123 (b/num m)
+        1234 (b/num (b/with-num m 1234))
+        #broch/unit[124 "m"] ((b/box inc) m)
+        (b/from-edn [123 "m"]) m
+        [123 "m"] (b/to-edn m))))
+  (testing "for numbers"
+    (let [n 123.456]
+      (is (not (b/unit? n)))
+      (are [x y] (= x y)
+        nil (b/measure n)
+        nil (b/symbol n)
+        n (b/num n)
+        124.456 ((b/box inc) n)))))
 
 (deftest invertible-conversion
   (doseq [u unit-fns]

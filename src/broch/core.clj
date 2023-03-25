@@ -22,8 +22,8 @@
   [u] (when-not (number? u) (p/->symbol u)))
 
 (defn num
-  "Get just the number. Pass through if already a number."
-  [x] (if (number? x) x (p/->number x)))
+  "Get the number from a unit. Pass through if already a number."
+  [u] (if (number? u) u (p/->number u)))
 
 (defn with-num
   "Make copy of unit with a different number."
