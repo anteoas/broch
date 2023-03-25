@@ -3,8 +3,8 @@
   (:require [broch.protocols :refer [IQuantity composition measure number symbol]]))
 
 (defn quantity? [x] (satisfies? IQuantity x))
-(defn same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
-(defn same-unit? [x y] (and (same-measure? x y) (= (symbol x) (symbol y))))
+(defn- same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
+(defn- same-unit? [x y] (and (same-measure? x y) (= (symbol x) (symbol y))))
 
 (declare ->base)
 (deftype Quantity [-measure -symbol -composition -number]
@@ -34,7 +34,7 @@
 
 (defn- quantity* [unit n] (->Quantity (measure unit) (symbol unit) (composition unit) n))
 (defn boxed [f q] (quantity* q (f (number q))))
-(defn simple? [q] (empty? (dissoc (composition q) :broch/scaled (quantity* q nil))))
+(defn- simple? [q] (empty? (dissoc (composition q) :broch/scaled (quantity* q nil))))
 
 (defn- pow [n x] (reduce * (repeat x n)))
 
@@ -98,7 +98,7 @@
 
     :else (throw (ex-info "Unhandled case." {:unit unit :x x}))))
 
-(defn ensure-basic [comp]
+(defn- ensure-basic [comp]
   (->> (update-keys comp #(if (fn? %) (%) %))
        (reduce (fn [acc [k v]]
                  (if (= :broch/scaled k)
@@ -117,7 +117,7 @@
 
 (def ^:dynamic *warn-on-symbol-collision* true)
 
-(defn warn-on-collision! [unit]
+(defn- warn-on-collision! [unit]
   (when (@symbol-registry (symbol unit))
     (binding [*out* *err*]
       (println "WARN: a unit with symbol" (symbol unit) "already exists! Overriding..."))))
@@ -146,7 +146,7 @@
        (filter (comp not zero? second))
        (into {})))
 
-(defn attempt-derivation [x y op]
+(defn- attempt-derivation [x y op]
   (let [derived-comp (derive-comp x y op)]
     (cond
       (empty? derived-comp) (op (number x) (number y))
