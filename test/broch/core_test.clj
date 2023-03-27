@@ -2,7 +2,6 @@
   (:require
    [broch.core :as b]
    [broch.data]
-   [broch.impl :as impl]
    [broch.protocols :as p]
    [clojure.test :refer [are deftest is testing]]
    [clojure.test.check.clojure-test :refer [defspec]]
@@ -55,6 +54,16 @@
         (testing (str "Functions: \n" u "\n" v)
           (is (== (b/num (u 123)) (b/num (u (v (u 123)))))))))))
 
+(deftest conversion
+  (testing "accuracy"
+    (is (= 32.80839895013123 (double (b/num (b/feet (b/meters 10))))))
+    (is (= 393.7007874015748 (double (b/num (b/inches (b/meters 10))))))
+    (is (= 10.93613298337708 (double (b/num (b/yards (b/meters 10))))))
+    (is (= 0.00621371192237334 (double (b/num (b/miles (b/meters 10)))))))
+  (testing "prefers closest unit"
+    (is (= "m/s" (p/symbol (b/* #broch/quantity[3 "m/s²"] #broch/quantity[3 "s"]))))
+    (is (= "kWh" (p/symbol (b/* #broch/quantity[12 "kW"] #broch/quantity[5 "h"]))))))
+
 (deftest comparison
   (is (= #broch/quantity[1000 "m"] #broch/quantity[1 "km"]))
   (is (b/< #broch/quantity[1 "ft"] #broch/quantity[1 "m"]))
@@ -64,8 +73,8 @@
   (let [m (b/meters 134)
         f (b/feet 52)]
     (are [x y] (= x y)
-      #broch/quantity[614534/4101 "m"] (b/+ m f)
-      #broch/quantity[484534/4101 "m"] (b/- m f)
+      #broch/quantity[93656/625 "m"] (b/+ m f)
+      #broch/quantity[73844/625 "m"] (b/- m f)
       #broch/quantity[402 "m"] (b/* m 3)
       #broch/quantity[134/3 "m"] (b// m 3)
       #broch/quantity[3 "m/s"] (b// #broch/quantity[9 "m"] #broch/quantity[3 "s"])

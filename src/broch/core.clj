@@ -154,9 +154,9 @@
 
 ;; Stupid Length
 (defunit miles :length "mi" 1609.344)
-(defunit yards :length "yd" 1250/1367)
-(defunit feet :length "ft" 1250/4101)
-(defunit inches :length "in" 100/3937)
+(defunit yards :length "yd" 0.9144)
+(defunit feet :length "ft" 0.3048)
+(defunit inches :length "in" 0.0254)
 
 ;; Time
 (defunit seconds :time "s" 1)

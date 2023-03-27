@@ -51,11 +51,11 @@
               (dissoc composition :broch/scaled)))))
 
 (defn- downcast
-  "Downcast ratio to double and double to long if possible without losing precision."
+  "Downcast if possible without losing precision."
   [n]
   (cond-> n
-    (and (ratio? n) (= n (rationalize (double n)))) (double)
-    (and (or (ratio? n) (float? n)) (= n (long (double n)))) (long)))
+    (and (ratio? n) (= n (rationalize (unchecked-double n)))) (double)
+    (== n (unchecked-long n)) (long)))
 
 (defn- safe-scale [n m] (when (and n m) (* n m)))
 (defn- ->base [q] (safe-scale (rationalize (number q)) (scale-of-base q)))
@@ -93,10 +93,37 @@
     (quantity? x)
     (if (same-measure? x unit)
       (convert x unit)
-      (throw (ex-info (str "Cannot convert a quantity of " (measure x) " into a quantity of" (measure unit))
+      (throw (ex-info (str "Cannot convert " (measure x) " into " (measure unit))
                       {:from x :to unit})))
 
     :else (throw (ex-info "Unhandled case." {:unit unit :x x}))))
+
+(defonce symbol-registry (atom {}))
+(defonce composition-registry (atom {}))
+
+(def ^:dynamic *warn-on-symbol-collision* true)
+
+(defn- warn-on-collision! [unit]
+  (when (@symbol-registry (symbol unit))
+    (binding [*out* *err*]
+      (println "WARN: a unit with symbol" (symbol unit) "already exists! Overriding..."))))
+
+(defn- measure-composition [unit-composition]
+  (->> (dissoc unit-composition :broch/scaled)
+       (map (fn [[k v]] {(measure k) v}))
+       (apply merge-with +)))
+
+(defn register-unit! [unit]
+  (when *warn-on-symbol-collision* (warn-on-collision! unit))
+  (swap! composition-registry (fn [reg]
+                                (merge {(composition unit) unit}
+                                       {(measure-composition (composition unit)) unit}
+                                       reg
+                                       (when (and (simple? unit) (= 1 (:broch/scaled (composition unit))))
+                                         ; override "default" unit for measure
+                                         {(measure-composition (composition unit)) unit}))))
+  (swap! symbol-registry assoc (symbol unit) unit))
+
 
 (defn- ensure-basic [comp]
   (->> (update-keys comp #(if (fn? %) (%) %))
