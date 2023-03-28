@@ -18,10 +18,6 @@ There is not full agreement on what to name things in this space, but I've settl
 - `unit` = `measure` + scaling, denoted by a unit symbol. (scaling based in SI units) 
 - `quantity` = `unit` + number. 
 
-The actual type is called Quantity. 
-But I sometimes call it a unit (and internally the number can be `nil` to represent this) 
-if we're talking about just the unit and not any specific amount.
-
 ## Usage
 The ergonomics for handling units is inspired by the excellent 
 [tick.core](https://github.com/juxt/tick#tick).
