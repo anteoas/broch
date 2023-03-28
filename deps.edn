@@ -14,5 +14,5 @@
            :exec-fn    deps-deploy.deps-deploy/deploy
            :exec-args  {:installer      :remote
                         :sign-releases? true
-                        :artifact       "target/broch-0.1.58.jar"}}
+                        :artifact       "target/deploy.jar"}}
   }}

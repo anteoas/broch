@@ -134,11 +134,9 @@ Ratios are harder to read for humans, so where that is a concern I recommend con
 - Clojurescript compatibility
 
 ## Deploy
-Update dependencies in pom.xml by running
+Build jar and deploy to clojars with
 ```shell
-$ clj -Spom
-```
-and deploy to clojars with
-```shell
+$ clj -T:build clean
+$ clj -T:build jar
 $ env CLOJARS_USERNAME=<username> CLOJARS_PASSWORD=<clojars-token> clj -X:deploy
 ```
