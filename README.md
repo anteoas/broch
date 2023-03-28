@@ -1,3 +1,5 @@
+[![Clojars Project](https://img.shields.io/clojars/v/no.anteo/broch.svg)](https://clojars.org/no.anteo/broch)
+
 # Broch
 A library for handling quantities. Features:
 * Conversion between compatible units
