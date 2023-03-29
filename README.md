@@ -1,7 +1,9 @@
 [![Clojars Project](https://img.shields.io/clojars/v/no.anteo/broch.svg)](https://clojars.org/no.anteo/broch)
 
 # Broch
-A library for handling quantities. Features:
+A library for handling numbers with units. 
+
+Features:
 * Conversion between compatible units
 * Comparison and arithmetic
 * Data literals
@@ -13,9 +15,9 @@ for his contributions as director of the
 ![](https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Ole_Jacob_Broch.png/375px-Ole_Jacob_Broch.png)
 
 ## Names
-There is not full agreement on what to name things in this space, but I've settled on these definitions.
+There is some disagreement on what to name things in this space, but I've settled on these definitions.
 - `measure` = the thing that is measured. (i.e `:length` or `:time`)
-- `unit` = `measure` + scaling, denoted by a unit symbol. (scaling based in SI units) 
+- `unit` = `measure` + scaling, denoted by a unit symbol. (the scaling is based in SI units) 
 - `quantity` = `unit` + number. 
 
 ## Usage
@@ -38,7 +40,7 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 #broch/quantity[10 "m"] ;=> #broch/quantity[10 "m"]
 
 ; the unit fns also convert units if compatible
-(b/feet #broch/quantity[10 "m"]) ;=> #broch/quantity[32.8083989501 "ft"]
+(b/feet (b/meters 10)) ;=> #broch/quantity[32.8083989501 "ft"]
 
 ; but conversion of incompatible units throw an error
 (b/meters (b/seconds 3)) ;=> ExceptionInfo "Cannot convert :time into :length"
@@ -56,19 +58,20 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 ### Derived units
 
 ```clojure
-; units have a composition represented as a map of unit to exponent
+; units have a an internal composition-map of measure to exponent + scaling
 
-; simple units have a self-referring composition
+; simple units have a only their own measure
 (p/composition (b/meters 2))
-; => {#broch/quantity[nil "m"] 1, :broch/scaled 1}
+; => {:length 1, :broch/scaled 1}
 
-; as we all remember from school, a Watt is kg·m²/s³
+; compund units have a more complicated composition map of the measures they're composed of
+; as we all remember from school, a W = J/s = N·m/s = kg·m²/s³
 (p/composition (b/watts 4)) 
-;=> {#broch/quantity[nil "kg"] 1, #broch/quantity[nil "m"] 2, #broch/quantity[nil "s"] -3, , :broch/scaled 1}
+;=> {:mass 1, :length 2, :time -3, :broch/scaled 1}
 
 ; a kilowatt is the same, but scaled by 1000
 (p/composition (b/kilowatts 4))
-;=> {#broch/quantity[nil "kg"] 1, #broch/quantity[nil "m"] 2, #broch/quantity[nil "s"] -3, :broch/scaled 1000}
+;=> {:mass 1, :length 2, :time -3, :broch/scaled 1000}
 
 ; this allows more complicated arithmetic (* and /) to derive the correct unit and convert the quantity, if it's defined
 (b/* #broch/quantity[3 "m/s²"] #broch/quantity[3 "s"]) ;=> #broch/quantity[9 "m/s"]
@@ -78,14 +81,14 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 ; If all units are cancelled out, a number is returned
 (/ #broch/quantity[1 "m"] #broch/quantity[2 "m"]) ;=> 1/2
 
-; If no unit of that composition is defined, error
+; If no unit of that composition is defined, an error is thrown
 (/ #broch/quantity[1 "m"] #broch/quantity[2 "s"]) ;=> #broch/quantity[0.5 "m/s"]
 (/ #broch/quantity[2 "s"] #broch/quantity[1 "m"]) 
 ;=> ExceptionInfo "No derived unit is registered for {#broch/quantity[nil "s"] 1, #broch/quantity[nil "m"] -1}"
 ```
 
 ### Defining new units
-Broch comes with a bunch of units pre-defined in `broch.core` (more will likely be added in time).
+Broch comes with a bunch of units pre-defined in `broch.core` (more will likely be added in time, request and PRs are welcome).
 But defining your own units is a peace-of-cake. 
 
 ```clojure
@@ -106,7 +109,7 @@ But defining your own units is a peace-of-cake.
 
 ; derived units are similar, but also takes a unit-map giving their composition
 (b/defunit meters-per-second :speed "m/s" {meters 1 seconds -1} 1) ;=> #'my-ns/meters-per-second
-; Also note that since these units are alrady defined, running the `defunit` forms above would print warnings like 
+; Also note that since these units are already defined, running the `defunit` forms above would print warnings like 
 ; "WARN: a unit with symbol m already exists! Overriding..." 
 ; You probably don't want to override taken symbols, make up a new one instead.
 
@@ -119,11 +122,10 @@ But defining your own units is a peace-of-cake.
 ### Tradeoffs
 This library is not written for high performance. 
 It rather tries to be as accurate as possible and avoid precision loss with floating-point numbers. 
-This means that it sometimes returns ratios instead of doubles, if it cannot downcast without losing precision.
-Ratios are harder to read for humans, so where that is a concern I recommend converting to double with `b/boxed`
+This means that it sometimes "upcasts" numbers to ratios, if it cannot downcast without losing precision.
+Ratios can be harder to read for humans, so where that is a concern I recommend converting to double with `b/boxed`
 ```clojure 
-(b/boxed double (b/meters 1/3)) ;=> #broch/quantity[0.3333333333333333 "m"]
-
+(b/boxed double (b/meters 355/113)) ;=> #broch/quantity[3.141592920353982 "m"]
 ```
 
 ### Not yet implemented
