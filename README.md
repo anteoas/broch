@@ -15,10 +15,10 @@ for his contributions as director of the
 ![](https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Ole_Jacob_Broch.png/375px-Ole_Jacob_Broch.png)
 
 ## Names
-There is some disagreement on what to name things in this space, but I've settled on these definitions.
+There is some disagreement on what to name things in this space, but I've settled on these definitions:
 - `measure` = the thing that is measured. (i.e `:length` or `:time`)
-- `unit` = `measure` + scaling, denoted by a unit symbol. (the scaling is based in SI units) 
-- `quantity` = `unit` + number. 
+- `unit` = `measure`, `scaling` and `symbol`. (the scaling is based in SI units) 
+- `quantity` = `unit` and `number`. 
 
 ## Usage
 The ergonomics for handling units is inspired by the excellent 
@@ -33,23 +33,24 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 
 ### Basic units
 ```clojure
-; making a quantity
+; to turn a number into a quantity, use a unit fn
+; there are many built-in ones, like b/meters
 (b/meters 10) ;=> #broch/quantity[10 "m"]
 
 ; data literals
 #broch/quantity[10 "m"] ;=> #broch/quantity[10 "m"]
 
-; the unit fns also convert units if compatible
+; the unit fns also convert quantities, if compatible
 (b/feet (b/meters 10)) ;=> #broch/quantity[32.8083989501 "ft"]
 
-; but conversion of incompatible units throw an error
+; but conversion of incompatible units throws an error
 (b/meters (b/seconds 3)) ;=> ExceptionInfo "Cannot convert :time into :length"
 
 ; you can compare compatible units
 (b/> #broch/quantity[1 "km"] #broch/quantity[999 "m"]) ;=> true
 
 ; and do arithmetic
-(b/- #broch/quantity[1 "km"] #broch/quantity[1 "mi"]) ;=> #broch/quantity[-0.6093440000000001 "km"]
+(b/- #broch/quantity[1 "km"] #broch/quantity[1 "mi"]) ;=> #broch/quantity[-0.609344 "km"]
 
 ; and, again, we get sensible errors if incompatible
 (b/- #broch/quantity[2 "km"] #broch/quantity[1 "s"]) ;=> ExceptionInfo "Cannot add/subtract :length and :time"
@@ -64,8 +65,8 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 (p/composition (b/meters 2))
 ; => {:length 1, :broch/scaled 1}
 
-; compund units have a more complicated composition map of the measures they're composed of
-; as we all remember from school, a W = J/s = N·m/s = kg·m²/s³
+; compound units have a more complicated composition map of the measures they're composed of
+; as we all remember from school, W = J/s = N·m/s = kg·m²/s³
 (p/composition (b/watts 4)) 
 ;=> {:mass 1, :length 2, :time -3, :broch/scaled 1}
 
@@ -81,14 +82,15 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 ; If all units are cancelled out, a number is returned
 (/ #broch/quantity[1 "m"] #broch/quantity[2 "m"]) ;=> 1/2
 
-; If no unit of that composition is defined, an error is thrown
+; If no unit with a derived composition is defined, an error is thrown
 (/ #broch/quantity[1 "m"] #broch/quantity[2 "s"]) ;=> #broch/quantity[0.5 "m/s"]
 (/ #broch/quantity[2 "s"] #broch/quantity[1 "m"]) 
 ;=> ExceptionInfo "No derived unit is registered for {#broch/quantity[nil "s"] 1, #broch/quantity[nil "m"] -1}"
 ```
 
 ### Defining new units
-Broch comes with a bunch of units pre-defined in `broch.core` (more will likely be added in time, request and PRs are welcome).
+Broch comes with a bunch of units pre-defined in `broch.core` (more will likely be added in time, requests and PRs are welcome).
+
 But defining your own units is a peace-of-cake. 
 
 ```clojure
@@ -103,15 +105,24 @@ But defining your own units is a peace-of-cake.
 
 ; The built-in units rely on the SI-system for measures and their base units. 
 ; So the meter is the base unit of :length, and other units of :length must specify their scale relative to it. 
-(b/defunit feet :length "ft" 1250/4101) ;=> #'my-ns/feet  
-; Note that 1250/4101 gives the exact ratio
-; a double would not be completely accurate resulting in rounding errors on conversion.
+(b/defunit feet :length "ft" 0.3048) ;=> #'my-ns/feet  
 
 ; derived units are similar, but also takes a unit-map giving their composition
 (b/defunit meters-per-second :speed "m/s" {meters 1 seconds -1} 1) ;=> #'my-ns/meters-per-second
 ; Also note that since these units are already defined, running the `defunit` forms above would print warnings like 
 ; "WARN: a unit with symbol m already exists! Overriding..." 
 ; You probably don't want to override taken symbols, make up a new one instead.
+
+; If you provide a composition, the given scaling is relative to the composing units
+; so you could say for example:
+; a yard is 0.9144 meters
+(defunit yards :length "yd" 0.9144) :=> #'my-ns/yards 
+; and a foot is a third of a yard
+(defunit feet :length "ft" 1/3 {yards 1}) :=> #'my-ns/feet
+; and there's 12 inches in a foot
+(defunit inches :length "in" 1/12 {feet 1}) :=> #'my-ns/inches
+; and it knows that an inch is scaled 0.0254 of a meter
+(b/meters (b/inches 1)) ;=> #broch/quantity[0.0254 "m"]
 
 ; Measures and symbols are just names though, so they could be anything. For example:
 (b/defunit me :coolness "me" 1) ;=> #'my-ns/me
