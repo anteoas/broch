@@ -50,7 +50,7 @@
 
 (defn- quantity* [unit n] (->Quantity (measure unit) (symbol unit) (composition unit) n))
 (defn boxed [f q] (quantity* q (f (number q))))
-(defn- simple? [q] (empty? (dissoc (composition q) :broch/scaled (measure q))))
+(defn simple? [q] (= 1 (get (dissoc (composition q) :broch/scaled) (measure q))))
 
 (defn- pow [n x] (reduce * (repeat x n)))
 
@@ -108,7 +108,7 @@
        (map (fn [[k v]]
               (cond
                 (= :broch/scaled k) {k v}
-                (simple? k) {(measure k) v :broch/scaled (scale-of-base k)}
+                (simple? k) {(measure k) v :broch/scaled (pow (scale-of-base k) v)}
                 :else (into {} (map (fn [[i j]]
                                       {i (if (= :broch/scaled k)
                                            (pow j v)

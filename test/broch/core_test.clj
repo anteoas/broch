@@ -59,7 +59,8 @@
     (is (= 32.80839895013123 (double (b/num (b/feet (b/meters 10))))))
     (is (= 393.7007874015748 (double (b/num (b/inches (b/meters 10))))))
     (is (= 10.93613298337708 (double (b/num (b/yards (b/meters 10))))))
-    (is (= 0.00621371192237334 (double (b/num (b/miles (b/meters 10)))))))
+    (is (= 0.00621371192237334 (double (b/num (b/miles (b/meters 10))))))
+    (is (= 4046.8564224 (double (b/num (b/square-meters (b/acres 1)))))))
   (testing "prefers closest unit"
     (is (= "m/s" (p/symbol (b/* #broch/quantity[3 "m/s²"] #broch/quantity[3 "s"]))))
     (is (= "kWh" (p/symbol (b/* #broch/quantity[12 "kW"] #broch/quantity[5 "h"]))))))

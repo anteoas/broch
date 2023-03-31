@@ -150,13 +150,13 @@
 (defunit decimeters :length "dm" 1/10)
 (defunit meters :length "m" 1)
 (defunit kilometers :length "km" 1000)
-(defunit nautical-miles :length "NM" 1852)
 
 ;; Stupid Length
-(defunit miles :length "mi" 1609.344)
 (defunit yards :length "yd" 0.9144)
-(defunit feet :length "ft" 0.3048)
-(defunit inches :length "in" 0.0254)
+(defunit miles :length "mi" 1760 {yards 1})
+(defunit feet :length "ft" 1/3 {yards 1})
+(defunit inches :length "in" 1/12 {feet 1})
+(defunit nautical-miles :length "NM" 1852)
 
 ;; Time
 (defunit seconds :time "s" 1)
@@ -188,6 +188,7 @@
 (defunit square-yards :area "yd²" {yards 2})
 (defunit square-feet :area "ft²" {feet 2})
 (defunit square-inches :area "in²" {inches 2})
+(defunit acres :area "ac" 4840 {yards 2})
 
 ;; Volume
 (defunit cubic-millimeters :volume "cm³" {millimeters 3})
