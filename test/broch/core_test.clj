@@ -70,18 +70,17 @@
   (is (b/> #broch/quantity[1 "h"] #broch/quantity[1 "min"])))
 
 (deftest arithmetic
-  (let [m (b/meters 134)
-        f (b/feet 52)]
-    (are [x y] (= x y)
-      #broch/quantity[93656/625 "m"] (b/+ m f)
-      #broch/quantity[73844/625 "m"] (b/- m f)
-      #broch/quantity[402 "m"] (b/* m 3)
-      #broch/quantity[134/3 "m"] (b// m 3)
-      #broch/quantity[3 "m/s"] (b// #broch/quantity[9 "m"] #broch/quantity[3 "s"])
-      #broch/quantity[2 "h"] (b// #broch/quantity[4 "Wh"] #broch/quantity[2 "W"])
-      #broch/quantity[2 "h"] (b// #broch/quantity[4 "kWh"] (b/* 1000 #broch/quantity[2 "W"]))
-      #broch/quantity[2 "J"] (b/* #broch/quantity[1 "N"] #broch/quantity[2 "m"])
-      #broch/quantity[0 "m"] (b// 0 #broch/quantity[2 "m"]))))
+  (are [x y] (= x y)
+    #broch/quantity[-0.609344 "km"] (b/- #broch/quantity[1 "km"] #broch/quantity[1 "mi"])
+    #broch/quantity[93656/625 "m"] (b/+ (b/meters 134) (b/feet 52))
+    #broch/quantity[73844/625 "m"] (b/- (b/meters 134) (b/feet 52))
+    #broch/quantity[402 "m"] (b/* (b/meters 134) 3)
+    #broch/quantity[134/3 "m"] (b// (b/meters 134) 3)
+    #broch/quantity[3 "m/s"] (b// #broch/quantity[9 "m"] #broch/quantity[3 "s"])
+    #broch/quantity[2 "h"] (b// #broch/quantity[4 "Wh"] #broch/quantity[2 "W"])
+    #broch/quantity[2 "h"] (b// #broch/quantity[4 "kWh"] (b/* 1000 #broch/quantity[2 "W"]))
+    #broch/quantity[2 "J"] (b/* #broch/quantity[1 "N"] #broch/quantity[2 "m"])
+    #broch/quantity[0 "m"] (b// 0 #broch/quantity[2 "m"])))
 
 (deftest advanced-arithmetic
   (are [x y] (= x y)
@@ -109,7 +108,9 @@
     (is (op-equal? '< n m) (str n "<" m))
     (is (op-equal? '> n m) (str n ">" m))
     (is (op-equal? '<= n m) (str n "<=" m))
-    (is (op-equal? '>= n m) (str n ">=" m))))
+    (is (op-equal? '>= n m) (str n ">=" m))
+    (is (op-equal? 'min n m) (str "min" n m))
+    (is (op-equal? 'max n m) (str "max" n m))))
 
 (declare thrown?)
 (deftest number-handling

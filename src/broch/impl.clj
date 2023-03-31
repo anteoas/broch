@@ -185,7 +185,7 @@
 
     (or (= op +) (= op -) (= op min) (= op max))
     (if (same-measure? x y)
-      (<-base x (op (->base x) (->base y)))
+      (converting-op x x y op)
       (throw (ex-info (str "Cannot add/subtract " (measure x) " and " (measure y)) {:from x :to y})))
 
     :else (throw (ex-info "Unsupported operation." {:op op :x x :y y}))))
