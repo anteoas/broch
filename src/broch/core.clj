@@ -151,7 +151,6 @@
 (defunit meters :length "m" 1)
 (defunit kilometers :length "km" 1000)
 
-;; Stupid Length
 (defunit yards :length "yd" 0.9144)
 (defunit miles :length "mi" 1760 {yards 1})
 (defunit feet :length "ft" 1/3 {yards 1})
@@ -164,13 +163,18 @@
 (defunit hours :time "h" 3600)
 
 ;; Mass
-(defunit grams :mass "g" 1/1000)
+(defunit picogram :mass "pg" 1.0E-15)
+(defunit nanogram :mass "ng" 1.0E-12)
+(defunit micrograms :mass "µg" 1.0E-9)
+(defunit milligrams :mass "mg" 1.0E-6)
+(defunit grams :mass "g" 1.0E-3)
 (defunit kilograms :mass "kg" 1)
-(defunit tonnes :mass "t" 1000)
+(defunit tonnes :mass "t" 1.0E3)
 
-(defunit kilograms-per-second :mass-rate "kg/s" {kilograms 1 seconds -1})
-(defunit kilograms-per-hour :mass-rate "kg/h" {kilograms 1 hours -1})
-(defunit tonnes-per-hour :mass-rate "t/h" {tonnes 1 hours -1})
+(defunit pounds :mass "lbs" 0.45359237)
+(defunit ounce :mass "oz" 1/16 {pounds 1})
+(defunit long-tons :mass "ST" 2240 {pounds 1})
+(defunit short-tons :mass "LT" 2000 {pounds 1})
 
 ;; Other SI
 (defunit kelvin :thermodynamic-temperature "K" 1)
@@ -178,12 +182,18 @@
 (defunit moles :amount-of-substance "mol" 1)
 (defunit candelas :luminous-intensity "cd" 1)
 
+;; Mass rate
+(defunit kilograms-per-second :mass-rate "kg/s" {kilograms 1 seconds -1})
+(defunit kilograms-per-hour :mass-rate "kg/h" {kilograms 1 hours -1})
+(defunit tonnes-per-hour :mass-rate "t/h" {tonnes 1 hours -1})
+
 ;; Area
 (defunit square-millimeters :area "mm²" {millimeters 2})
 (defunit square-centimeters :area "cm²" {centimeters 2})
 (defunit square-decimeters :area "dm²" {decimeters 2})
 (defunit square-meters :area "m²" {meters 2})
 (defunit square-kilometers :area "km²" {kilometers 2})
+
 (defunit square-miles :area "mi²" {miles 2})
 (defunit square-yards :area "yd²" {yards 2})
 (defunit square-feet :area "ft²" {feet 2})
@@ -195,6 +205,7 @@
 (defunit cubic-centimeters :volume "dm³" {centimeters 3})
 (defunit cubic-meters :volume "m³" {meters 3})
 (defunit cubic-kilometers :volume "km³" {kilometers 3})
+
 (defunit cubic-miles :volume "mi³" {miles 3})
 (defunit cubic-yards :volume "yd³" {yards 3})
 (defunit cubic-feet :volume "ft³" {feet 3})
@@ -204,8 +215,26 @@
 (defunit deciliters :volume "dl" 1/10 {liters 1})
 (defunit centiliters :volume "cl" 1/100 {liters 1})
 
+;; Volume Rate
 (defunit liters-per-hour :volume-rate "l/h" {liters 1 hours -1})
 (defunit liters-per-second :volume-rate "l/s" {liters 1 seconds -1})
+
+;; Surface Density
+(defunit micrograms-per-square-millimeter :surface-density "µg/mm²" {micrograms 1 square-millimeters -1})
+(defunit grams-per-square-centimeter :surface-density "g/cm²" {grams 1 square-centimeters -1})
+(defunit kilograms-per-square-centimeter :surface-density "kg/cm²" {kilograms 1 square-centimeters -1})
+(defunit kilograms-per-square-meter :surface-density "kg/m²" {kilograms 1 square-meters -1})
+
+(defunit ounces-per-square-inch :surface-density "oz/in²" {ounce 1 square-inches -1})
+(defunit pounds-per-square-inch :surface-density "lbs/in²" {pounds 1 square-inches -1})
+(defunit pounds-per-square-foot :surface-density "lbs/ft²" {pounds 1 square-feet -1})
+
+;; Density
+(defunit grams-per-cubic-centimeter :density "g/m³" {grams 1 cubic-centimeters -1})
+(defunit kilograms-per-cubic-meter :density "kg/m³" {kilograms 1 cubic-meters -1})
+(defunit kilograms-per-liter :density "kg/l" {kilograms 1 liters -1})
+
+(defunit pounds-per-cubic-foot :density "lbs/ft²" {pounds 1 cubic-feet -1})
 
 ;; Speed
 (defunit kilometers-per-hour :speed "km/h" {kilometers 1 hours -1})
