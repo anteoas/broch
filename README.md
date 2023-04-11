@@ -130,7 +130,7 @@ But defining your own units is a peace-of-cake.
 (= #broch/quantity[1 "DJ Rich"] #broch/quantity[1000 "me"]) ;=> true
 ```
 
-### Tradeoffs
+## Tradeoffs
 This library is not written for high performance. 
 It rather tries to be as accurate as possible and avoid precision loss with floating-point numbers. 
 This means that it sometimes "upcasts" numbers to ratios, if it cannot keep it as a double losing precision.
@@ -139,8 +139,57 @@ Ratios can be harder to read for humans, so where that is a concern I recommend 
 (b/boxed double (b/meters 355/113)) ;=> #broch/quantity[3.141592920353982 "m"]
 ```
 
-### Not yet implemented
+## Not yet implemented
 - Clojurescript compatibility
+
+## FAQ
+<details>
+    <summary>Where's Celsius and Fahrenheit?</summary>
+
+TLDR: Intentionally left out.
+
+Both these common ways of denoting temperature has intentionally been *left out* of this library. 
+This is because neither °C nor °F are actually *just* units of measure in the true sense, because their zero-points are not zero.
+They are *units on a scale*, which is why we prefix them with a °.
+
+Zero grams is no mass, and zero miles per hour is no speed, but zero °C is *not* no temperature. 
+It's quite a lot of temperature actually, exactly 273.15 K of temperature.
+Zero kelvin *is* no temperature, and that's why it is included in this library, 
+and why it's (probably) the only unit for temperature you'll ever see used in any real computations involving temperature. 
+
+We could have added support for translation (shifting the zero-point),
+but that would have complicated conversion and raised some difficult questions on how to handle equality and arithmetic with 
+these non-zero-based units. 
+
+For example:
+```clojure 
+; remember that 32°F = 0°C
+(b/+ (b/fahrenheit 32) (b/celcius 0)) ;=> ?
+(b/+ (b/celcius 0) (b/fahrenheit 32)) ;=> ?
+```
+Is it 0 °C or 64 °F? Both answers are plausible depending on which unit you choose to convert to before adding them together.
+And picking one interpretation, say always converting to the first argument's unit, would mean that `b/+` and `b/*` are no longer 
+[commutative](https://en.wikipedia.org/wiki/Commutative_property) for temperatures, which is no good. 
+
+In conclusion, if you need to do stuff with temperatures and show the result in °C or °F,
+do whatever you need to do in kelvins and then [scale the result yourself](https://en.wikipedia.org/wiki/Conversion_of_scales_of_temperature) like this:
+```clojure 
+(def k #broch/quantity[345 "K"])
+
+; to fahrenheit
+(double
+ (- (* (b/num k) 9/5)
+    (rationalize 459.67))) 
+;=> 161.33
+
+; to celcius
+(double
+ (- (b/num k)
+    (rationalize 273.15))) 
+;=> 71.85
+```
+
+</details> 
 
 ## Deploy
 Build jar and deploy to clojars with
