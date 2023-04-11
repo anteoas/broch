@@ -234,7 +234,7 @@
 (defunit kilograms-per-cubic-meter :density "kg/m³" {kilograms 1 cubic-meters -1})
 (defunit kilograms-per-liter :density "kg/l" {kilograms 1 liters -1})
 
-(defunit pounds-per-cubic-foot :density "lbs/ft²" {pounds 1 cubic-feet -1})
+(defunit pounds-per-cubic-foot :density "lbs/ft³" {pounds 1 cubic-feet -1})
 
 ;; Speed
 (defunit kilometers-per-hour :speed "km/h" {kilometers 1 hours -1})
