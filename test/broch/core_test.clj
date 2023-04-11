@@ -47,6 +47,11 @@
         n (b/num n)
         124.456 (b/boxed inc n)))))
 
+(deftest composition
+  (testing "computing scale"
+    (is (= 1 (:broch/scaled (p/composition (b/kilograms-per-cubic-meter 1)))))
+    (is (= 3600000 (:broch/scaled (p/composition (b/kilowatt-hours 1)))))))
+
 (deftest invertible-conversion
   (doseq [u unit-fns]
     (let [units-of-same-measure (filter #(= (b/measure (u)) (b/measure (%))) unit-fns)]

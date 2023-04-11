@@ -22,3 +22,5 @@
                `(def ~local ~local))
              (keys &env))
         'do))
+
+(defn printr [x] (println x) x)

@@ -110,7 +110,7 @@
                 (= :broch/scaled k) {k v}
                 (simple? k) {(measure k) v :broch/scaled (pow (scale-of-base k) v)}
                 :else (into {} (map (fn [[i j]]
-                                      {i (if (= :broch/scaled k)
+                                      {i (if (= :broch/scaled i)
                                            (pow j v)
                                            (* j v))})
                                     (composition k))))))
