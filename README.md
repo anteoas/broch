@@ -66,7 +66,7 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 ; => {:length 1, :broch/scaled 1}
 
 ; compound units have a more complicated composition map of the measures they're composed of
-; as we all remember from school, W = J/s = N·m/s = kg·m²/s³
+; as we all remember from school: W = J/s = N·m/s = kg·m²/s³
 (p/composition (b/watts 4)) 
 ;=> {:mass 1, :length 2, :time -3, :broch/scaled 1}
 
