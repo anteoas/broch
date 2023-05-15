@@ -90,6 +90,7 @@
 
 (deftest advanced-arithmetic
   (are [x y] (= x y)
+    3/2 (b// #broch/quantity[3 "m"] #broch/quantity[2 "m"])
     #broch/quantity[0.012 "N"] (b// #broch/quantity[12 "J"] #broch/quantity[1 "km"])
     #broch/quantity[12000 "J"] (b/* #broch/quantity[12 "N"] #broch/quantity[1 "km"])
     #broch/quantity[1/450 "m/s²"] (b// #broch/quantity[8 "m/s"] #broch/quantity[1 "h"])))

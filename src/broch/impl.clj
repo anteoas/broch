@@ -157,7 +157,7 @@
   (let [derived-comp          (derive-comp x y op)
         unscaled-derived-comp (assoc derived-comp :broch/scaled 1)]
     (cond
-      (empty? derived-comp) (op (number x) (number y))
+      (or (empty? derived-comp) (empty? (dissoc derived-comp :broch/scaled))) (op (number x) (number y))
 
       (@composition-registry derived-comp)
       (converting-op (@composition-registry derived-comp) x y op)
