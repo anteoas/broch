@@ -49,8 +49,9 @@
 
 (deftest composition
   (testing "computing scale"
-    (is (= 1 (:broch/scaled (p/composition (b/kilograms-per-cubic-meter 1)))))
-    (is (= 3600000 (:broch/scaled (p/composition (b/kilowatt-hours 1)))))))
+    (is (== 1 (:broch/scaled (p/composition (b/kilograms-per-cubic-meter 1)))))
+    (is (== 5/18 (:broch/scaled (p/composition (b/kilometers-per-hour 1)))))
+    (is (== 3600000 (:broch/scaled (p/composition (b/kilowatt-hours 1)))))))
 
 (deftest invertible-conversion
   (doseq [u unit-fns]
@@ -68,7 +69,11 @@
     (is (= 4046.8564224 (double (b/num (b/square-meters (b/acres 1)))))))
   (testing "prefers closest unit"
     (is (= "m/s" (p/symbol (b/* #broch/quantity[3 "m/s²"] #broch/quantity[3 "s"]))))
-    (is (= "kWh" (p/symbol (b/* #broch/quantity[12 "kW"] #broch/quantity[5 "h"]))))))
+    (is (= "kWh" (p/symbol (b/* #broch/quantity[12 "kW"] #broch/quantity[5 "h"])))))
+  (testing "changing denominator"
+    (is (= #broch/quantity[36 "km/h"] (b/kilometers-per-hour (b/meters-per-second 10))))
+    (is (= (b/kilograms-per-square-meter (b/kilograms-per-square-centimeter 10))
+           (b// (b/kilograms 10) (b/square-meters (b/square-centimeters 1)))))))
 
 (deftest comparison
   (is (= #broch/quantity[1000 "m"] #broch/quantity[1 "km"]))
@@ -142,5 +147,9 @@
   )
 
 
+
 (comment
+
+
+
   (clojure.test/run-tests))

@@ -52,7 +52,10 @@
 (defn boxed [f q] (quantity* q (f (number q))))
 (defn simple? [q] (= 1 (get (dissoc (composition q) :broch/scaled) (measure q))))
 
-(defn- pow [n x] (reduce * (repeat x n)))
+(defn- pow [n x]
+  (if (neg? x)
+    (/ 1 (reduce * (repeat (abs x) n)))
+    (reduce * (repeat x n))))
 
 (defn- downcast
   "Downcast if possible without losing precision."
