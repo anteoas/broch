@@ -6,22 +6,6 @@
 (defn- same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
 (defn- same-unit? [x y] (and (same-measure? x y) (= (symbol x) (symbol y))))
 
-(defonce symbol-registry (atom {}))
-(defonce composition-registry (atom {}))
-
-(def ^:dynamic *warn-on-symbol-collision* true)
-
-(defn- warn-on-collision! [unit]
-  (when (@symbol-registry (symbol unit))
-    (binding [*out* *err*]
-      (println "WARN: a unit with symbol" (symbol unit) "already exists! Overriding..."))))
-
-(defn register-unit! [unit]
-  (when *warn-on-symbol-collision* (warn-on-collision! unit))
-  (swap! composition-registry (fn [reg] (merge reg
-                                               {(composition unit) unit})))
-  (swap! symbol-registry assoc (symbol unit) unit))
-
 (declare ->base)
 (deftype Quantity [-measure -symbol -composition -number]
   Object
