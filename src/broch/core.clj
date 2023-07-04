@@ -140,6 +140,12 @@
   ([unit-fn-name measure symb scaling composition]
    `(def ~unit-fn-name (new-unit ~measure ~symb ~scaling ~composition))))
 
+(defmacro defunit-once
+  ([unit-fn-name measure symb scale-or-comp]
+   `(defonce ~unit-fn-name (new-unit ~measure ~symb ~scale-or-comp)))
+  ([unit-fn-name measure symb scaling composition]
+   `(defonce ~unit-fn-name (new-unit ~measure ~symb ~scaling ~composition))))
+
 ;;
 ;; Unit definitions
 ;;
