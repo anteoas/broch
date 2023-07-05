@@ -95,7 +95,7 @@
   (->> (update-keys unit-comp #(if (fn? %) (%) %))
        (map (fn [[k v]]
               (cond
-                (= :broch/scaled k) {k v}
+                (= :broch/scaled k) {k (rationalize v)}
                 (simple? k) {(measure k) v :broch/scaled (pow (scale-of-base k) v)}
                 :else (into {} (map (fn [[i j]]
                                       {i (if (= :broch/scaled i)
@@ -126,8 +126,8 @@
 (defn register-unit! [unit]
   (when *warn-on-symbol-collision* (warn-on-collision! unit))
   (swap! composition-registry (fn [reg]
-                                (merge {(composition unit) unit}
-                                       reg)))
+                                (merge reg
+                                       {(composition unit) unit})))
   (swap! symbol-registry assoc (symbol unit) unit))
 
 (defn- derive-comp [x y op]

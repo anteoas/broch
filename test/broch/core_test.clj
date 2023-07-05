@@ -68,7 +68,9 @@
     (is (= 4046.8564224 (double (b/num (b/square-meters (b/acres 1)))))))
   (testing "prefers closest unit"
     (is (= "m/s" (p/symbol (b/* #broch/quantity[3 "m/s²"] #broch/quantity[3 "s"]))))
-    (is (= "kWh" (p/symbol (b/* #broch/quantity[12 "kW"] #broch/quantity[5 "h"])))))
+    (is (= "kWh" (p/symbol (b/* #broch/quantity[12 "kW"] #broch/quantity[5 "h"]))))
+    (is (= "lbs/in²" (p/symbol (b// #broch/quantity[2 "lbs"] #broch/quantity[30 "in²"]))))
+    (is (= "t/h" (p/symbol (b// #broch/quantity[2 "t"] #broch/quantity[1 "h"])))))
   (testing "changing denominator"
     (is (= #broch/quantity[36 "km/h"] (b/kilometers-per-hour (b/meters-per-second 10))))
     (is (= (b/kilograms-per-square-meter (b/kilograms-per-square-centimeter 10))
@@ -142,13 +144,9 @@
   (is (= (b/meters 10) (b/max (b/meters 10) 7)))
 
   (is (= (b/meters 10) (b/min (b/meters 10) (b/max (b/kilometers 7) (b/meters 8)))))
-  (is (= (b/kilometers 7) (b/max (b/meters 10) (b/kilometers 7) 88)))
-  )
+  (is (= (b/kilometers 7) (b/max (b/meters 10) (b/kilometers 7) 88))))
 
 
 
 (comment
-
-
-
   (clojure.test/run-tests))
