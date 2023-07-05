@@ -1,6 +1,7 @@
 (ns broch.impl
   (:refer-clojure :exclude [symbol])
-  (:require [broch.protocols :refer [IQuantity composition measure number symbol]]))
+  (:require [broch.protocols :refer [IQuantity composition measure number symbol]])
+  (:import (java.io Writer)))
 
 (defn quantity? [x] (satisfies? IQuantity x))
 (defn- same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
@@ -176,3 +177,20 @@
       (throw (ex-info (str "Cannot add/subtract " (measure x) " and " (measure y)) {:from x :to y})))
 
     :else (throw (ex-info "Unsupported operation." {:op op :x x :y y}))))
+
+
+;; Data literal
+
+(defn from-edn [[n s]]
+  (if (@symbol-registry s)
+    (quantity (@symbol-registry s) n)
+    (throw (ex-info (str "Symbol \"" s "\" not registered!") {:number n :symbol s :registry @symbol-registry}))))
+(defn to-edn [u] [(number u) (symbol u)])
+(defn print-unit [u] (str "#broch/quantity" (to-edn u)))
+
+(extend-protocol clojure.core.protocols/Datafiable
+  Quantity
+  (datafy [u] (to-edn u)))
+
+(defmethod print-method Quantity [u ^Writer w] (.write w ^String (print-unit u)))
+(defmethod print-dup Quantity [u ^Writer w] (.write w ^String (print-unit u)))

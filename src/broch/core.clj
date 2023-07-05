@@ -1,7 +1,6 @@
 (ns broch.core
   (:refer-clojure :exclude [* + - / < <= > >= max min num symbol])
-  (:require [broch.data :as data]
-            [broch.impl :as impl]
+  (:require [broch.impl :as impl]
             [broch.protocols :as p]))
 
 ;;
@@ -112,8 +111,8 @@
      false)))
 
 ;; Serializing
-(defn from-edn [x] (data/from-edn x))
-(defn to-edn [u] (data/to-edn u))
+(defn from-edn [x] (impl/from-edn x))
+(defn to-edn [u] (impl/to-edn u))
 
 ;;
 ;; Creating units

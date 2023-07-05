@@ -1,2 +1,2 @@
-{broch/unit     broch.data/from-edn
- broch/quantity broch.data/from-edn}
+{broch/unit     broch.impl/from-edn
+ broch/quantity broch.impl/from-edn}

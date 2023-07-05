@@ -1,7 +1,6 @@
 (ns broch.core-test
   (:require
    [broch.core :as b]
-   [broch.data]
    [broch.protocols :as p]
    [clojure.test :refer [are deftest is testing]]
    [clojure.test.check.clojure-test :refer [defspec]]
