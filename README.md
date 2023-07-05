@@ -133,8 +133,8 @@ But defining your own units is a peace-of-cake.
 ## Tradeoffs
 This library is not written for high performance. 
 It rather tries to be as accurate as possible and avoid precision loss with floating-point numbers. 
-This means that it sometimes "upcasts" numbers to ratios, if it cannot keep it as a double losing precision.
-Ratios can be harder to read for humans, so where that is a concern I recommend converting to double with `b/boxed`
+This means that it sometimes "upcasts" numbers to ratios, if it cannot keep it as a double without losing precision.
+Ratios can be harder to read for humans, so where that is a concern you can cast the number type with `b/boxed`
 ```clojure 
 (b/boxed double (b/meters 355/113)) ;=> #broch/quantity[3.141592920353982 "m"]
 ```
