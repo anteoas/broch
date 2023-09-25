@@ -61,7 +61,7 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 ```clojure
 ; units have an internal composition-map of measure to exponent + scaling
 
-; simple units have a only their own measure
+; simple units just have their own measure
 (p/composition (b/meters 2))
 ; => {:length 1, :broch/scaled 1}
 
