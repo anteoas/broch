@@ -107,7 +107,7 @@ But defining your own units is a peace-of-cake.
 ; So the meter is the base unit of :length, and other units of :length must specify their scale relative to it. 
 (b/defunit feet :length "ft" 0.3048) ;=> #'my-ns/feet  
 
-; derived units are similar, but also takes a unit-map giving their composition
+; derived units are similar, but also take a unit-map giving their composition
 (b/defunit meters-per-second :speed "m/s" {meters 1 seconds -1} 1) ;=> #'my-ns/meters-per-second
 ; Also note that since these units are already defined, running the `defunit` forms above would print warnings like 
 ; "WARN: a unit with symbol m already exists! Overriding..." 
