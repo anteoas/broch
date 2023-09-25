@@ -80,11 +80,11 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 (b// #broch/quantity[12 "J"] #broch/quantity[1 "km"]) ;=> #broch/quantity[0.12 "N"]
 
 ; If all units are cancelled out, a number is returned
-(/ #broch/quantity[1 "m"] #broch/quantity[2 "m"]) ;=> 1/2
+(b// #broch/quantity[1 "m"] #broch/quantity[2 "m"]) ;=> 1/2
 
 ; If no unit with a derived composition is defined, an error is thrown
-(/ #broch/quantity[1 "m"] #broch/quantity[2 "s"]) ;=> #broch/quantity[0.5 "m/s"]
-(/ #broch/quantity[2 "s"] #broch/quantity[1 "m"]) 
+(b// #broch/quantity[1 "m"] #broch/quantity[2 "s"]) ;=> #broch/quantity[0.5 "m/s"]
+(b// #broch/quantity[2 "s"] #broch/quantity[1 "m"]) 
 ;=> ExceptionInfo "No derived unit is registered for {#broch/quantity[nil "s"] 1, #broch/quantity[nil "m"] -1}"
 ```
 
