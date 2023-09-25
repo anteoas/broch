@@ -17,8 +17,8 @@ for his contributions as director of the
 ## Names
 There is some disagreement on what to name things in this space, but I've settled on these definitions:
 - `measure` = the thing that is measured. (i.e `:length` or `:time`)
-- `unit` = `measure`, `scaling` and `symbol`. (the scaling is based in SI units) 
-- `quantity` = `unit` and `number`. 
+- `unit` = a `measure` with a set `scaling` and a `symbol`. (the scaling is based in SI units) 
+- `quantity` = a `number` with a `unit`. 
 
 ## Usage
 The ergonomics for handling units is inspired by the excellent 
