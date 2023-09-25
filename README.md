@@ -59,7 +59,7 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 ### Derived units
 
 ```clojure
-; units have a an internal composition-map of measure to exponent + scaling
+; units have an internal composition-map of measure to exponent + scaling
 
 ; simple units have a only their own measure
 (p/composition (b/meters 2))
