@@ -5,10 +5,11 @@
  {:dev
   {:extra-paths ["test" "dev"]
    :extra-deps  {io.github.clojure/tools.build {:git/tag "v0.9.4" :git/sha "76b78fe"}
-                 org.clojure/test.check {:mvn/version "1.1.1"}}}
+                 org.clojure/test.check        {:mvn/version "1.1.1"}
+                 org.clojure/clojurescript     {:mvn/version "1.11.54"}}}
 
-  :build {:deps {io.github.clojure/tools.build {:git/tag "v0.9.4" :git/sha "76b78fe"}}
-          :ns-default build}
+  :build  {:deps       {io.github.clojure/tools.build {:git/tag "v0.9.4" :git/sha "76b78fe"}}
+           :ns-default build}
 
   :deploy {:extra-deps {slipset/deps-deploy {:mvn/version "0.2.0"}}
            :exec-fn    deps-deploy.deps-deploy/deploy

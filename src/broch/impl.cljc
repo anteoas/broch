@@ -1,28 +1,42 @@
 (ns broch.impl
-  (:refer-clojure :exclude [symbol])
-  (:require [broch.protocols :refer [IQuantity composition measure number symbol]])
-  (:import (java.io Writer)))
+  (:refer-clojure :exclude [symbol read-string])
+  (:require [broch.protocols :refer [IQuantity composition measure number symbol]]
+            #?@(:cljs [[cljs.reader]
+                       [cljs.compiler]]))
+  #?(:clj (:import (java.io Writer))))
 
 (defn quantity? [x] (satisfies? IQuantity x))
 (defn- same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
 (defn- same-unit? [x y] (and (same-measure? x y) (= (symbol x) (symbol y))))
 
 (declare ->base)
+(defn- compare-quantities [x y]
+  (if (same-measure? x y)
+    (compare (->base x) (->base y))
+    (throw (ex-info (str "Cannot compare units of different measure. " (measure x) " and " (measure y) ".")
+                    {:x x :y y}))))
+(defn- quantities-equal? [x y]
+  (and (same-measure? x y)
+       (or (and (number x) (number y) (== (->base x) (->base y)))
+           (and (same-unit? x y) (nil? (number x)) (nil? (number y))))))
 (deftype Quantity [-measure -symbol -composition -number]
-  Object
-  (toString [_] (str -number " " -symbol))
-  (hashCode [_] (hash {:measure -measure :symbol -symbol :number -number}))
-  (equals [this other]
-    (and (same-measure? this other)
-         (or (and -number (number other) (== (->base this) (->base other)))
-             (and (same-unit? this other) (nil? -number) (nil? (number other))))))
-
-  Comparable
-  (compareTo [this other]
-    (if (same-measure? this other)
-      (compare (->base this) (->base other))
-      (throw (ex-info (str "Cannot compare units of different measure. " -measure " and " (measure other) ".")
-                      {:x this :y other}))))
+  #?@(:clj
+      [Object
+       (toString [_] (str -number " " -symbol))
+       (hashCode [_] (hash {:measure -measure :symbol -symbol :number -number}))
+       (equals [this other] (quantities-equal? this other))
+       Comparable
+       (compareTo [this other] (compare-quantities this other))]
+      :cljs
+      [Object
+       (toString [_] (str -number " " -symbol))
+       (equiv [this other] (-equiv this other))
+       IEquiv
+       (-equiv [this other] (quantities-equal? this other))
+       IHash
+       (-hash [this] (hash {:measure -measure :symbol -symbol :number -number}))
+       IComparable
+       (-compare [this other] (compare-quantities this other))])
 
   IQuantity
   (measure [_] -measure)
@@ -45,28 +59,35 @@
 (defn- downcast
   "Downcast if possible without losing precision."
   [n]
-  (cond-> n
-    (and (ratio? n) (= n (rationalize (unchecked-double n)))) (double)
-    (== n (unchecked-long n)) (long)))
+  #?(:clj (cond-> n
+            (and (ratio? n) (= n (rationalize (unchecked-double n)))) (double)
+            (== n (unchecked-long n)) (long))
+     :cljs n))
 
 (defn- safe-scale [n m] (when (and n m) (* n m)))
-(defn- scale-of-base [q] (or (rationalize (:broch/scaled (composition q))) 1))
-(defn- ->base [q] (safe-scale (rationalize (number q)) (scale-of-base q)))
+(defn- scale-of-base [q]
+  #?(:clj (or (rationalize (:broch/scaled (composition q))) 1)
+     :cljs (or (:broch/scaled (composition q)) 1)))
+(defn- ->base [q]
+  (safe-scale #?(:clj (rationalize (number q)) :cljs (number q))
+              (scale-of-base q)))
 (defn- <-base [q n] (quantity* q (safe-scale n (/ 1 (scale-of-base q)))))
 
 (defn- convert [a b]
   (let [converted (<-base b (->base a))]
     (cond
-      (ratio? (number a)) converted
+      #?(:clj (ratio? (number a)) :cljs nil) converted
       (float? (number a)) (quantity* converted (double (number converted)))
       :else (quantity* converted (downcast (number converted))))))
 
 (defn- converting-op [unit a b op]
   (let [converted (<-base unit (op (->base a) (->base b)))]
     (cond
-      (ratio? (number a)) converted
+      #?(:clj (ratio? (number a)) :cljs nil) converted
       (float? (number a)) (quantity* converted (double (number converted)))
       :else (quantity* converted (downcast (number converted))))))
+
+(def read-string #?(:clj clojure.core/read-string :cljs cljs.reader/read-string))
 
 (defn quantity
   [unit x]
@@ -95,7 +116,7 @@
   (->> (update-keys unit-comp #(if (fn? %) (%) %))
        (map (fn [[k v]]
               (cond
-                (= :broch/scaled k) {k (rationalize v)}
+                (= :broch/scaled k) {k #?(:clj (rationalize v) :cljs v)}
                 (simple? k) {(measure k) v :broch/scaled (pow (scale-of-base k) v)}
                 :else (into {} (map (fn [[i j]]
                                       {i (if (= :broch/scaled i)
@@ -120,8 +141,9 @@
 
 (defn- warn-on-collision! [unit]
   (when (@symbol-registry (symbol unit))
-    (binding [*out* *err*]
-      (println "WARN: a unit with symbol" (symbol unit) "already exists! Overriding..."))))
+    (let [error-str (str "WARN: a unit with symbol" (symbol unit) "already exists! Overriding...")]
+      #?(:clj  (binding [*out* *err*] (println error-str))
+         :cljs (js/console.error error-str)))))
 
 (defn register-unit! [unit]
   (when *warn-on-symbol-collision* (warn-on-collision! unit))
@@ -185,12 +207,21 @@
   (if (@symbol-registry s)
     (quantity (@symbol-registry s) n)
     (throw (ex-info (str "Symbol \"" s "\" not registered!") {:number n :symbol s :registry @symbol-registry}))))
-(defn to-edn [u] [(number u) (symbol u)])
-(defn print-unit [u] (str "#broch/quantity" (to-edn u)))
+(defn to-edn [q] [(number q) (symbol q)])
+(defn print-quantity [q] (str "#broch/quantity" (to-edn q)))
 
-(extend-protocol clojure.core.protocols/Datafiable
-  Quantity
-  (datafy [u] (to-edn u)))
+(def tags {'broch/quantity from-edn})
+#?(:cljs (cljs.reader/register-tag-parser! 'broch/quantity #(from-edn %)))
 
-(defmethod print-method Quantity [u ^Writer w] (.write w ^String (print-unit u)))
-(defmethod print-dup Quantity [u ^Writer w] (.write w ^String (print-unit u)))
+
+#?(:clj
+   (do
+     (extend-protocol clojure.core.protocols/Datafiable
+       Quantity
+       (datafy [q] (to-edn q)))
+     (defmethod print-method Quantity [q ^Writer w] (.write w ^String (print-quantity q)))
+     (defmethod print-dup Quantity [q ^Writer w] (.write w ^String (print-quantity q))))
+   :cljs
+   (extend-protocol IPrintWithWriter
+                    Quantity
+                    (-pr-writer [q writer opts] (-write writer (print-quantity q)))))
