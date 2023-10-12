@@ -1,6 +1,7 @@
 (ns broch.core
   (:refer-clojure :exclude [* + - / < <= > >= max min num symbol])
   (:require [broch.impl :as impl]
+            [broch.extensions]
             [broch.protocols :as p]))
 
 ;;
@@ -169,6 +170,9 @@
 (def nautical-miles (new-unit :length "NM" 1852))
 
 ;; Time
+(def nanoseconds (new-unit :time "ns" 1.0E-9))
+(def microseconds (new-unit :time "μs" 1.0E-6))
+(def milliseconds (new-unit :time "ms" 1.0E-3))
 (def seconds (new-unit :time "s" 1))
 (def minutes (new-unit :time "min" 60))
 (def hours (new-unit :time "h" 3600))

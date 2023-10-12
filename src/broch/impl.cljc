@@ -141,7 +141,7 @@
 
 (defn- warn-on-collision! [unit]
   (when (@symbol-registry (symbol unit))
-    (let [error-str (str "WARN: a unit with symbol" (symbol unit) "already exists! Overriding...")]
+    (let [error-str (str "WARN: a unit with symbol " (symbol unit) " already exists! Overriding...")]
       #?(:clj  (binding [*out* *err*] (println error-str))
          :cljs (js/console.error error-str)))))
 
