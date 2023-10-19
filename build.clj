@@ -1,8 +1,10 @@
 (ns build
-  (:require [clojure.tools.build.api :as b]))
+  (:require [clojure.string :as str]
+            [clojure.tools.build.api :as b])
+  (:import (java.time LocalDate)))
 
 (def lib 'no.anteo/broch)
-(def version (format "0.1.%s" (b/git-count-revs nil)))
+(def version (str/replace (str (LocalDate/now)) #"-" "."))
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn"}))
 (def jar-file "target/deploy.jar")
