@@ -3,11 +3,11 @@
 # Broch
 A library for handling numbers with units. 
 
-Features:
-* Conversion between compatible units
-* Comparison and arithmetic
+Main Features:
+* Conversion, comparison and arithmetic.
 * Data literals
-* Compatible with clojurescript
+* Clojurescript compatible
+* No dependencies
 
 Named after [Ole Jacob Broch](https://en.wikipedia.org/wiki/Ole_Jacob_Broch) 
 for his contributions as director of the 
