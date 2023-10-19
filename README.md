@@ -7,6 +7,7 @@ Features:
 * Conversion between compatible units
 * Comparison and arithmetic
 * Data literals
+* Compatible with clojurescript
 
 Named after [Ole Jacob Broch](https://en.wikipedia.org/wiki/Ole_Jacob_Broch) 
 for his contributions as director of the 
@@ -138,9 +139,6 @@ Ratios can be harder to read for humans, so where that is a concern you can cast
 ```clojure 
 (b/boxed double (b/meters 355/113)) ;=> #broch/quantity[3.141592920353982 "m"]
 ```
-
-## Not yet implemented
-- Clojurescript compatibility
 
 ## FAQ
 <details>
