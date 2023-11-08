@@ -188,8 +188,8 @@
 
 (def pounds (new-unit :mass "lbs" 0.45359237))
 (def ounce (new-unit :mass "oz" (/ 1 16) {pounds 1}))
-(def long-tons (new-unit :mass "ST" 2240 {pounds 1}))
-(def short-tons (new-unit :mass "LT" 2000 {pounds 1}))
+(def long-tons (new-unit :mass "LT" 2240 {pounds 1}))
+(def short-tons (new-unit :mass "ST" 2000 {pounds 1}))
 
 ;; Other SI
 (def kelvin (new-unit :thermodynamic-temperature "K" 1))
