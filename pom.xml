@@ -4,7 +4,7 @@
   <packaging>jar</packaging>
   <groupId>no.anteo</groupId>
   <artifactId>broch</artifactId>
-  <version>2023.10.19</version>
+  <version>2023.11.08</version>
   <name>broch</name>
   <dependencies>
     <dependency>
@@ -25,7 +25,7 @@
   <scm>
     <connection>scm:git:git://github.com/anteoas/broch.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/anteoas/broch.git</developerConnection>
-    <tag>v2023.10.19</tag>
+    <tag>v2023.11.08</tag>
     <url>https://github.com/anteoas/broch</url>
   </scm>
 </project>
