@@ -25,11 +25,10 @@ There is some disagreement on what to name things in this space, but I've settle
 The ergonomics for handling units is inspired by the excellent 
 [tick.core](https://github.com/juxt/tick#tick).
 
-The following code assumes this ns definition. (You probably wont need `broch.protocols` though.)
+The following code assumes this ns definition.
 ```clojure 
 (ns my-ns
-  (:require [broch.core :as b]
-            [broch.protocols :as p]))
+  (:require [broch.core :as b]))
 ```
 
 ### Basic units
@@ -63,16 +62,16 @@ The following code assumes this ns definition. (You probably wont need `broch.pr
 ; units have an internal composition-map of measure to exponent + scaling
 
 ; simple units just have their own measure
-(p/composition (b/meters 2))
+(b/composition (b/meters 2))
 ; => {:length 1, :broch/scaled 1}
 
 ; compound units have a more complicated composition map of the measures they're composed of
 ; as we all remember from school: W = J/s = N·m/s = kg·m²/s³
-(p/composition (b/watts 4)) 
+(b/composition (b/watts 4)) 
 ;=> {:mass 1, :length 2, :time -3, :broch/scaled 1}
 
 ; a kilowatt is the same, but scaled by 1000
-(p/composition (b/kilowatts 4))
+(b/composition (b/kilowatts 4))
 ;=> {:mass 1, :length 2, :time -3, :broch/scaled 1000}
 
 ; this allows more complicated arithmetic (* and /) to derive the correct unit and convert the quantity, if it's defined
