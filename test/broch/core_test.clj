@@ -1,7 +1,6 @@
 (ns broch.core-test
   (:require
    [broch.core :as b]
-   [broch.protocols :as p]
    [clojure.test :refer [are deftest is testing]]
    [clojure.test.check.clojure-test :refer [defspec]]
    [clojure.test.check.generators :as gen]
@@ -32,6 +31,7 @@
       (are [x y] (= x y)
         :length (b/measure m)
         "m" (b/symbol m)
+        {:length 1 :broch/scaled 1} (b/composition m)
         123 (b/num m)
         1234 (b/num (b/with-num m 1234))
         #broch/quantity[124 "m"] (b/boxed inc m)
@@ -43,14 +43,15 @@
       (are [x y] (= x y)
         nil (b/measure n)
         nil (b/symbol n)
+        nil (b/composition n)
         n (b/num n)
         124.456 (b/boxed inc n)))))
 
 (deftest composition
   (testing "computing scale"
-    (is (== 1 (:broch/scaled (p/composition (b/kilograms-per-cubic-meter 1)))))
-    (is (== 5/18 (:broch/scaled (p/composition (b/kilometers-per-hour 1)))))
-    (is (== 3600000 (:broch/scaled (p/composition (b/kilowatt-hours 1)))))))
+    (is (== 1 (:broch/scaled (b/composition (b/kilograms-per-cubic-meter 1)))))
+    (is (== 5/18 (:broch/scaled (b/composition (b/kilometers-per-hour 1)))))
+    (is (== 3600000 (:broch/scaled (b/composition (b/kilowatt-hours 1)))))))
 
 (deftest invertible-conversion
   (doseq [u unit-fns]
@@ -67,10 +68,10 @@
     (is (= 0.00621371192237334 (double (b/num (b/miles (b/meters 10))))))
     (is (= 4046.8564224 (double (b/num (b/square-meters (b/acres 1)))))))
   (testing "prefers closest unit"
-    (is (= "m/s" (p/symbol (b/* #broch/quantity[3 "m/s²"] #broch/quantity[3 "s"]))))
-    (is (= "kWh" (p/symbol (b/* #broch/quantity[12 "kW"] #broch/quantity[5 "h"]))))
-    (is (= "lbs/in²" (p/symbol (b// #broch/quantity[2 "lbs"] #broch/quantity[30 "in²"]))))
-    (is (= "t/h" (p/symbol (b// #broch/quantity[2 "t"] #broch/quantity[1 "h"])))))
+    (is (= "m/s" (b/symbol (b/* #broch/quantity[3 "m/s²"] #broch/quantity[3 "s"]))))
+    (is (= "kWh" (b/symbol (b/* #broch/quantity[12 "kW"] #broch/quantity[5 "h"]))))
+    (is (= "lbs/in²" (b/symbol (b// #broch/quantity[2 "lbs"] #broch/quantity[30 "in²"]))))
+    (is (= "t/h" (b/symbol (b// #broch/quantity[2 "t"] #broch/quantity[1 "h"])))))
   (testing "changing denominator"
     (is (= #broch/quantity[36 "km/h"] (b/kilometers-per-hour (b/meters-per-second 10))))
     (is (= (b/kilograms-per-square-meter (b/kilograms-per-square-centimeter 10))

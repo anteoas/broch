@@ -11,23 +11,27 @@
 
 (defn quantity?
   "Is this a quantity?"
-  [u] (impl/quantity? u))
+  [q] (impl/quantity? q))
 
 (defn measure
   "What this quantity is a measure of."
-  [u] (when-not (number? u) (p/measure u)))
+  [q] (when-not (number? q) (p/measure q)))
 
 (defn symbol
   "The unit symbol for this quantity."
-  [u] (when-not (number? u) (p/symbol u)))
+  [q] (when-not (number? q) (p/symbol q)))
+
+(defn composition
+  "The composition of this quantity."
+  [q] (when-not (number? q) (p/composition q)))
 
 (defn num
   "Get the number from a quantity. Pass through if already a number."
-  [u] (if (number? u) u (p/number u)))
+  [q] (if (number? q) q (p/number q)))
 
 (defn with-num
   "Make copy of a quantity with a different number."
-  [unit n] (impl/quantity unit n))
+  [quantity n] (impl/quantity quantity n))
 
 (defn boxed
   "Transform the quantity's number by any fn (i.e. fmap on the quantity-functor).
@@ -119,6 +123,14 @@
 ;; Creating units
 ;;
 
+(defn quantity
+  "Makes a new quantity of unit and x.
+  - unit must be a quantity (but the number part is ignored).
+  - x must be number-ish, i.e. a number, string of number, or another quantity.
+    If x is a quantity, it will be converted (or throw exception if incompatible)."
+  [unit x]
+  (impl/quantity unit x))
+
 (defn new-unit
   "Register a new type of unit with the given measure, symbol, composition and/or scaling.
   Returns a fn (fn [number]) that creates a quantity of this unit."
@@ -130,7 +142,7 @@
      (impl/register-unit! unit)
      (fn
        ([] unit)
-       ([x] (impl/quantity unit x)))))
+       ([x] (quantity unit x)))))
   ([measure symb scaling composition]
    (new-unit measure symb (assoc composition :broch/scaled scaling))))
 
