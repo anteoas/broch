@@ -25,6 +25,11 @@
   "The composition of this quantity."
   [q] (when-not (number? q) (p/composition q)))
 
+(defn compatible-units
+  "Returns units with the same measure as quantity."
+  [quantity]
+  (filter #(= (measure quantity) (measure %)) (vals @impl/symbol-registry)))
+
 (defn num
   "Get the number from a quantity. Pass through if already a number."
   [q] (if (number? q) q (p/number q)))
