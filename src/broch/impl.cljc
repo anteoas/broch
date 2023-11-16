@@ -7,6 +7,7 @@
 
 (defn quantity? [x] (satisfies? IQuantity x))
 (defn- same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
+(defn- compatible? [x y] (or (same-measure? x y)) (= (dissoc (composition x)) (composition y)))
 (defn- same-unit? [x y] (and (same-measure? x y) (= (symbol x) (symbol y))))
 
 (declare ->base)
@@ -77,6 +78,7 @@
   (let [converted (<-base b (->base a))]
     (cond
       #?(:clj (ratio? (number a)) :cljs nil) converted
+      (nil? (number a)) converted
       (float? (number a)) (quantity* converted (double (number converted)))
       :else (quantity* converted (downcast (number converted))))))
 
@@ -147,9 +149,9 @@
 
 (defn register-unit! [unit]
   (when *warn-on-symbol-collision* (warn-on-collision! unit))
-  (swap! composition-registry (fn [reg]
-                                (merge reg
-                                       {(composition unit) unit})))
+  (swap! composition-registry (fn [reg] (cond-> reg
+                                          (not (contains? reg (composition unit)))
+                                          (assoc (composition unit) unit))))
   (swap! symbol-registry assoc (symbol unit) unit))
 
 (defn- derive-comp [x y op]

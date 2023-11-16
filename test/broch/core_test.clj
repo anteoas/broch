@@ -134,6 +134,13 @@
   (is (= 123 (b/num 123)))
   (is (thrown? IllegalArgumentException (b/with-num 1 123))))
 
+(deftest nil-handling
+  (is (thrown? IllegalArgumentException (b/measure nil)))
+  (is (thrown? IllegalArgumentException (b/symbol nil)))
+  (is (thrown? IllegalArgumentException (b/num nil)))
+  (is (= (b/nautical-miles nil) (b/nautical-miles (b/meters nil))))
+  )
+
 
 (deftest min-max
   (is (= (b/meters 10) (b/min (b/meters 10))))
