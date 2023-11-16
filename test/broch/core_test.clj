@@ -93,7 +93,7 @@
     #broch/quantity[2 "h"] (b// #broch/quantity[4 "Wh"] #broch/quantity[2 "W"])
     #broch/quantity[2 "h"] (b// #broch/quantity[4 "kWh"] (b/* 1000 #broch/quantity[2 "W"]))
     #broch/quantity[2 "J"] (b/* #broch/quantity[1 "N"] #broch/quantity[2 "m"])
-    #broch/quantity[0 "m"] (b// 0 #broch/quantity[2 "m"])))
+    #broch/quantity[1/2 "Hz"] (b// 1 #broch/quantity[2 "s"])))
 
 (deftest advanced-arithmetic
   (are [x y] (= x y)
@@ -138,8 +138,11 @@
   (is (thrown? IllegalArgumentException (b/measure nil)))
   (is (thrown? IllegalArgumentException (b/symbol nil)))
   (is (thrown? IllegalArgumentException (b/num nil)))
-  (is (= (b/nautical-miles nil) (b/nautical-miles (b/meters nil))))
-  )
+  (is (= (b/nautical-miles nil) (b/nautical-miles (b/meters nil)))))
+
+(deftest compatible-units
+  (is (= (b/nautical-miles 1) (b/nautical-miles (b/meters 1852))))
+  (is (= (b/hertz 1) (b/hertz (b/becquerels 1)))))
 
 
 (deftest min-max

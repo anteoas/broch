@@ -214,11 +214,6 @@
 (def moles (new-unit :amount-of-substance "mol" 1))
 (def candelas (new-unit :luminous-intensity "cd" 1))
 
-;; Mass rate
-(def kilograms-per-second (new-unit :mass-rate "kg/s" {kilograms 1 seconds -1}))
-(def kilograms-per-hour (new-unit :mass-rate "kg/h" {kilograms 1 hours -1}))
-(def tonnes-per-hour (new-unit :mass-rate "t/h" {tonnes 1 hours -1}))
-
 ;; Area
 (def square-millimeters (new-unit :area "mm²" {millimeters 2}))
 (def square-centimeters (new-unit :area "cm²" {centimeters 2}))
@@ -247,10 +242,6 @@
 (def deciliters (new-unit :volume "dl" (/ 1 10) {liters 1}))
 (def centiliters (new-unit :volume "cl" (/ 1 100) {liters 1}))
 
-;; Volume Rate
-(def liters-per-hour (new-unit :volume-rate "l/h" {liters 1 hours -1}))
-(def liters-per-second (new-unit :volume-rate "l/s" {liters 1 seconds -1}))
-
 ;; Surface Density
 (def micrograms-per-square-millimeter (new-unit :surface-density "µg/mm²" {micrograms 1 square-millimeters -1}))
 (def grams-per-square-centimeter (new-unit :surface-density "g/cm²" {grams 1 square-centimeters -1}))
@@ -262,9 +253,9 @@
 (def pounds-per-square-foot (new-unit :surface-density "lbs/ft²" {pounds 1 square-feet -1}))
 
 ;; Density
-(def grams-per-cubic-centimeter (new-unit :density "g/m³" {grams 1 cubic-centimeters -1}))
-(def kilograms-per-cubic-meter (new-unit :density "kg/m³" {kilograms 1 cubic-meters -1}))
 (def kilograms-per-liter (new-unit :density "kg/l" {kilograms 1 liters -1}))
+(def kilograms-per-cubic-meter (new-unit :density "kg/m³" {kilograms 1 cubic-meters -1}))
+(def grams-per-cubic-centimeter (new-unit :density "g/m³" {grams 1 cubic-centimeters -1}))
 
 (def pounds-per-cubic-foot (new-unit :density "lbs/ft³" {pounds 1 cubic-feet -1}))
 
@@ -279,11 +270,50 @@
 
 ;; Force
 (def newtons (new-unit :force "N" {kilograms 1 meters 1 seconds -2}))
+(def pascals (new-unit :pressure "Pa" {newtons 1 meters -2}))
 
 ;; Power & Energy
 (def joules (new-unit :energy "J" {newtons 1 meters 1}))
+(def newton-meters (new-unit :torque "Nm" {newtons 1 meters 1}))
 (def watts (new-unit :power "W" {joules 1 seconds -1}))
 (def kilowatts (new-unit :power "kW" 1000 {watts 1}))
 (def watt-hours (new-unit :energy "Wh" {watts 1 hours 1}))
 (def kilowatt-hours (new-unit :energy "kWh" 1000 {watts 1 hours 1}))
+
+;; Electricity
+(def coulombs (new-unit :electric-charge "C" {seconds 1 amperes 1}))
+(def volts (new-unit :voltage "V" {watts 1 amperes -1}))
+(def farads (new-unit :electrical-capacitance "F" {coulombs 1 amperes -1}))
+(def ohms (new-unit :electrical-resistance "Ω" {volts 1 amperes -1}))
+(def siemens (new-unit :electrical-conductance "S" {ohms -1}))
+(def webers (new-unit :magnetic-flux "Wb" {joules 1 amperes -1}))
+(def teslas (new-unit :magnetic-induction "T" {volts 1 seconds 1 meters -2}))
+(def henrys (new-unit :electrical-inductance "H" {volts 1 seconds 1 amperes -1}))
+
+
+;; Angles
+(def radians (new-unit :angle "rad" 1))
+(def steradians (new-unit :solid-angle "sr" 1))
+
+;; Light
+(def lumens (new-unit :luminous-flux "lm" {candelas 1 steradians 1}))
+(def lux (new-unit :illuminance "lx" {lumens 1 meters -2}))
+
+
+;; Rates
+(def hertz (new-unit :frequency "Hz" {seconds -1}))
+(def hertz-per-second (new-unit :frequency-drift "Hz/s" {seconds -2}))
+(def kilograms-per-second (new-unit :mass-flow-rate "kg/s" {kilograms 1 seconds -1}))
+(def kilograms-per-hour (new-unit :mass-flow-rate "kg/h" {kilograms 1 hours -1}))
+(def tonnes-per-hour (new-unit :mass-flow-rate "t/h" {tonnes 1 hours -1}))
+(def liters-per-hour (new-unit :volumetric-flow "l/h" {liters 1 hours -1}))
+(def liters-per-second (new-unit :volumetric-flow "l/s" {liters 1 seconds -1}))
+(def radians-per-second (new-unit :angular-velocity "rad/s" {radians 1 seconds -1}))
+(def radians-per-second-squared (new-unit :angular-acceleration "rad/s²" {radians 1 seconds -2}))
+(def katals (new-unit :catalytic-activity "kat" {moles 1 seconds -1}))
+
+;; Radioactivity
+(def becquerels (new-unit :radioactivity "Bq" {seconds -1}))
+(def grays (new-unit :absorbed-dose "Gy" {joules 1 kilograms -1}))
+(def sieverts (new-unit :equivalent-dose "Sv" {joules 1 kilograms -1}))
 

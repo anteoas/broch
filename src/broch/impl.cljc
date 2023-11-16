@@ -6,9 +6,9 @@
   #?(:clj (:import (java.io Writer))))
 
 (defn quantity? [x] (satisfies? IQuantity x))
-(defn- same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
-(defn- compatible? [x y] (or (same-measure? x y)) (= (dissoc (composition x)) (composition y)))
-(defn- same-unit? [x y] (and (same-measure? x y) (= (symbol x) (symbol y))))
+(defn same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
+(defn compatible? [x y] (or (same-measure? x y) (= (dissoc (composition x)) (composition y))))
+(defn same-unit? [x y] (and (same-measure? x y) (= (symbol x) (symbol y))))
 
 (declare ->base)
 (defn- compare-quantities [x y]
@@ -107,7 +107,7 @@
         (throw (ex-info (str "Must be a number: " x) {:number x}))))
 
     (quantity? x)
-    (if (same-measure? x unit)
+    (if (compatible? x unit)
       (convert x unit)
       (throw (ex-info (str "Cannot convert " (measure x) " into " (measure unit))
                       {:from x :to unit})))
@@ -131,7 +131,9 @@
                              (merge-with * acc {k v})
                              (merge-with + acc {k v})))
                          acc m))
-               {})))
+               {})
+       (remove (fn [[_ v]] (= 0 v)))
+       (into {})))
 
 (defn unit [measure symbol composition]
   (->Quantity measure symbol (ensure-basic composition) nil))
@@ -179,26 +181,30 @@
 
       :else (throw (ex-info (str "No unit is registered for " derived-comp) derived-comp)))))
 
+(defn- unitless-quanity [number]
+  (reify IQuantity
+    (number [_] number)
+    (symbol [_] nil)
+    (measure [_] nil)
+    (composition [_] {:broch/scaled 1})))
+
 (defn boxed-arithmetic [x y op]
+  (assert (or (quantity? x) (number? x)) (or (quantity? y) (number? y)))
   (cond
-    (and (number? x) (number? y))
-    (op x y)
-
-    (and (quantity? x) (number? y))
-    (quantity x (op (number x) y))
-
-    (and (number? x) (quantity? y))
-    (quantity y (op x (number y)))
-
     (or (= op *) (= op /))
-    (if (and (same-measure? x y) (not (same-unit? x y)))
-      (attempt-derivation x (convert y x) op)
-      (attempt-derivation x y op))
+    (let [x (cond-> x (number? x) (unitless-quanity))
+          y (cond-> y (number? y) (unitless-quanity))]
+      (if (and (compatible? x y) (not (same-unit? x y)))
+        (attempt-derivation x (convert y x) op)
+        (attempt-derivation x y op)))
 
     (or (= op +) (= op -) (= op min) (= op max))
-    (if (same-measure? x y)
-      (converting-op x x y op)
-      (throw (ex-info (str "Cannot add/subtract " (measure x) " and " (measure y)) {:from x :to y})))
+    (cond
+      (and (number? x) (number? y)) (op x y)
+      (and (quantity? x) (number? y)) (quantity x (op (number x) y))
+      (and (number? x) (quantity? y)) (quantity y (op x (number y)))
+      (compatible? x y) (converting-op x x y op)
+      :else (throw (ex-info (str "Cannot add/subtract/compare " (measure x) " and " (measure y)) {:from x :to y})))
 
     :else (throw (ex-info "Unsupported operation." {:op op :x x :y y}))))
 
