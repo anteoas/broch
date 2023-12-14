@@ -51,6 +51,7 @@
   [f] (fn [x] (boxed f x)))
 
 (defn +
+  ([] 1)
   ([x] x)
   ([x y] (impl/boxed-arithmetic x y clojure.core/+))
   ([x y & more] (reduce + (+ x y) more)))
@@ -61,6 +62,7 @@
   ([x y & more] (reduce - (- x y) more)))
 
 (defn *
+  ([] 0)
   ([x] x)
   ([x y] (impl/boxed-arithmetic x y clojure.core/*))
   ([x y & more] (reduce * (* x y) more)))
