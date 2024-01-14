@@ -181,7 +181,7 @@
 
       :else (throw (ex-info (str "No unit is registered for " derived-comp) derived-comp)))))
 
-(defn- unitless-quanity [number]
+(defn- unitless-quantity [number]
   (reify IQuantity
     (number [_] number)
     (symbol [_] nil)
@@ -192,8 +192,8 @@
   (assert (or (quantity? x) (number? x)) (or (quantity? y) (number? y)))
   (cond
     (or (= op *) (= op /))
-    (let [x (cond-> x (number? x) (unitless-quanity))
-          y (cond-> y (number? y) (unitless-quanity))]
+    (let [x (cond-> x (number? x) (unitless-quantity))
+          y (cond-> y (number? y) (unitless-quantity))]
       (if (and (compatible? x y) (not (same-unit? x y)))
         (attempt-derivation x (convert y x) op)
         (attempt-derivation x y op)))
