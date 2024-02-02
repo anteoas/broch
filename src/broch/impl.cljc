@@ -1,9 +1,30 @@
 (ns broch.impl
-  (:refer-clojure :exclude [symbol read-string])
+  (:refer-clojure :exclude [symbol read-string rationalize])
   (:require [broch.protocols :refer [IQuantity composition measure number symbol]]
             #?@(:cljs [[cljs.reader]
                        [cljs.compiler]]))
-  #?(:clj (:import (java.io Writer))))
+  #?(:clj (:import (clojure.lang IMeta IObj Obj)
+                   (java.io Writer))))
+
+
+(defn- pow [n x]
+  (if (neg? x)
+    (/ 1 (reduce * (repeat (abs x) n)))
+    (reduce * (repeat x n))))
+
+(defn- rationalize
+  "Downcast if possible without losing precision."
+  [n]
+  #?(:clj  (clojure.core/rationalize n)
+     :cljs n))
+
+(defn- downcast
+  "Downcast if possible without losing precision."
+  [n]
+  #?(:clj  (cond-> n
+             (and (ratio? n) (= n (rationalize (unchecked-double n)))) (double)
+             (== n (unchecked-long n)) (long))
+     :cljs n))
 
 (defn quantity? [x] (satisfies? IQuantity x))
 (defn same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
@@ -52,26 +73,9 @@
 (defn boxed [f q] (quantity* q (f (number q))))
 (defn simple? [q] (= 1 (get (dissoc (composition q) :broch/scaled) (measure q))))
 
-(defn- pow [n x]
-  (if (neg? x)
-    (/ 1 (reduce * (repeat (abs x) n)))
-    (reduce * (repeat x n))))
-
-(defn- downcast
-  "Downcast if possible without losing precision."
-  [n]
-  #?(:clj (cond-> n
-            (and (ratio? n) (= n (rationalize (unchecked-double n)))) (double)
-            (== n (unchecked-long n)) (long))
-     :cljs n))
-
 (defn- safe-scale [n m] (when (and n m) (* n m)))
-(defn- scale-of-base [q]
-  #?(:clj (or (rationalize (:broch/scaled (composition q))) 1)
-     :cljs (or (:broch/scaled (composition q)) 1)))
-(defn- ->base [q]
-  (safe-scale #?(:clj (rationalize (number q)) :cljs (number q))
-              (scale-of-base q)))
+(defn- scale-of-base [q] (or (rationalize (:broch/scaled (composition q))) 1))
+(defn- ->base [q] (safe-scale (rationalize (number q)) (scale-of-base q)))
 (defn- <-base [q n] (quantity* q (safe-scale n (/ 1 (scale-of-base q)))))
 
 (defn- convert [a b]
@@ -112,13 +116,13 @@
       (throw (ex-info (str "Cannot convert " (measure x) " into " (measure unit))
                       {:from x :to unit})))
 
-    :else (throw (ex-info "Unhandled case." {:unit unit :x x}))))
+    :else (throw (ex-info (str "Unhandled case: " x " " (type x)) {:unit unit :x x}))))
 
 (defn- ensure-basic [unit-comp]
   (->> (update-keys unit-comp #(if (fn? %) (%) %))
        (map (fn [[k v]]
               (cond
-                (= :broch/scaled k) {k #?(:clj (rationalize v) :cljs v)}
+                (= :broch/scaled k) {k (rationalize v)}
                 (simple? k) {(measure k) v :broch/scaled (pow (scale-of-base k) v)}
                 :else (into {} (map (fn [[i j]]
                                       {i (if (= :broch/scaled i)
@@ -211,15 +215,25 @@
 
 ;; Data literal
 
+(defn to-edn [q] [(number q) (symbol q)])
 (defn from-edn [[n s]]
   (if (@symbol-registry s)
     (quantity (@symbol-registry s) n)
     (throw (ex-info (str "Symbol \"" s "\" not registered!") {:number n :symbol s :registry @symbol-registry}))))
-(defn to-edn [q] [(number q) (symbol q)])
 (defn print-quantity [q] (str "#broch/quantity" (to-edn q)))
 
 (def tags {'broch/quantity from-edn})
 #?(:cljs (cljs.reader/register-tag-parser! 'broch/quantity #(from-edn %)))
+(defmethod cljs.compiler/emit-constant* Quantity [q]
+  (cljs.compiler/emits "new broch.impl.Quantity(")
+  (cljs.compiler/emits-keyword (measure q))
+  (cljs.compiler/emits ",")
+  (cljs.compiler/emits (str \" (symbol q) \"))
+  (cljs.compiler/emits ",")
+  (cljs.compiler/emit-constant (composition q))
+  (cljs.compiler/emits ",")
+  (cljs.compiler/emit-constant (number q))
+  (cljs.compiler/emits ")"))
 
 
 #?(:clj
@@ -231,5 +245,5 @@
      (defmethod print-dup Quantity [q ^Writer w] (.write w ^String (print-quantity q))))
    :cljs
    (extend-protocol IPrintWithWriter
-                    Quantity
-                    (-pr-writer [q writer opts] (-write writer (print-quantity q)))))
+     Quantity
+     (-pr-writer [q writer opts] (-write writer (print-quantity q)))))

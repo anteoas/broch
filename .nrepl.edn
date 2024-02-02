@@ -1,0 +1,2 @@
+{:bind         "localhost"
+ :middleware   [cider.piggieback/wrap-cljs-repl]}
