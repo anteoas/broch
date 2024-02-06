@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [* + - / < <= > >= max min num symbol])
   (:require [broch.impl :as impl]
             [broch.extensions]
+            [broch.numbers :refer [add sub mul div neg]]
             [broch.protocols :as p]))
 
 ;;
@@ -53,23 +54,23 @@
 (defn +
   ([] 0)
   ([x] x)
-  ([x y] (impl/boxed-arithmetic x y clojure.core/+))
+  ([x y] (impl/boxed-arithmetic x y add))
   ([x y & more] (reduce + (+ x y) more)))
 
 (defn -
-  ([x] (boxed clojure.core/- x))
-  ([x y] (impl/boxed-arithmetic x y clojure.core/-))
+  ([x] (boxed neg x))
+  ([x y] (impl/boxed-arithmetic x y sub))
   ([x y & more] (reduce - (- x y) more)))
 
 (defn *
   ([] 1)
   ([x] x)
-  ([x y] (impl/boxed-arithmetic x y clojure.core/*))
+  ([x y] (impl/boxed-arithmetic x y mul))
   ([x y & more] (reduce * (* x y) more)))
 
 (defn /
   ([x] x)
-  ([x y] (impl/boxed-arithmetic x y clojure.core//))
+  ([x y] (impl/boxed-arithmetic x y div))
   ([x y & more] (reduce / (/ x y) more)))
 
 (defn min

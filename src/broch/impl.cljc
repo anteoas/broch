@@ -1,30 +1,11 @@
 (ns broch.impl
-  (:refer-clojure :exclude [symbol read-string rationalize])
+  (:refer-clojure :exclude [* add - / symbol read-string rationalize])
   (:require [broch.protocols :refer [IQuantity composition measure number symbol]]
+            [broch.numbers :refer [add sub mul div neg]]
             #?@(:cljs [[cljs.reader]
                        [cljs.compiler]]))
   #?(:clj (:import (clojure.lang IMeta IObj Obj)
                    (java.io Writer))))
-
-
-(defn- pow [n x]
-  (if (neg? x)
-    (/ 1 (reduce * (repeat (abs x) n)))
-    (reduce * (repeat x n))))
-
-(defn- rationalize
-  "Downcast if possible without losing precision."
-  [n]
-  #?(:clj  (clojure.core/rationalize n)
-     :cljs n))
-
-(defn- downcast
-  "Downcast if possible without losing precision."
-  [n]
-  #?(:clj  (cond-> n
-             (and (ratio? n) (= n (rationalize (unchecked-double n)))) (double)
-             (== n (unchecked-long n)) (long))
-     :cljs n))
 
 (defn quantity? [x] (satisfies? IQuantity x))
 (defn same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
@@ -39,7 +20,8 @@
                     {:x x :y y}))))
 (defn- quantities-equal? [x y]
   (and (same-measure? x y)
-       (or (and (number x) (number y) (== (->base x) (->base y)))
+       (or (and (number x) (number y) (let [bx (->base x) by (->base y)]
+                                        (or (= bx by) (== bx by))))
            (and (same-unit? x y) (nil? (number x)) (nil? (number y))))))
 (deftype Quantity [-measure -symbol -composition -number]
   #?@(:clj
@@ -73,10 +55,10 @@
 (defn boxed [f q] (quantity* q (f (number q))))
 (defn simple? [q] (= 1 (get (dissoc (composition q) :broch/scaled) (measure q))))
 
-(defn- safe-scale [n m] (when (and n m) (* n m)))
-(defn- scale-of-base [q] (or (rationalize (:broch/scaled (composition q))) 1))
-(defn- ->base [q] (safe-scale (rationalize (number q)) (scale-of-base q)))
-(defn- <-base [q n] (quantity* q (safe-scale n (/ 1 (scale-of-base q)))))
+(defn- safe-scale [n m] (when (and n m) (mul n m)))
+(defn- scale-of-base [q] (or (:broch/scaled (composition q)) 1))
+(defn- ->base [q] (safe-scale (number q) (scale-of-base q)))
+(defn- <-base [q n] (quantity* q (safe-scale n (div 1 (scale-of-base q)))))
 
 (defn- convert [a b]
   (let [converted (<-base b (->base a))]
@@ -84,14 +66,14 @@
       #?(:clj (ratio? (number a)) :cljs nil) converted
       (nil? (number a)) converted
       (float? (number a)) (quantity* converted (double (number converted)))
-      :else (quantity* converted (downcast (number converted))))))
+      :else (quantity* converted (number converted)))))
 
 (defn- converting-op [unit a b op]
   (let [converted (<-base unit (op (->base a) (->base b)))]
     (cond
       #?(:clj (ratio? (number a)) :cljs nil) converted
       (float? (number a)) (quantity* converted (double (number converted)))
-      :else (quantity* converted (downcast (number converted))))))
+      :else (quantity* converted (number converted)))))
 
 (def read-string #?(:clj clojure.core/read-string :cljs cljs.reader/read-string))
 
@@ -118,22 +100,27 @@
 
     :else (throw (ex-info (str "Unhandled case: " x " " (type x)) {:unit unit :x x}))))
 
+(defn- pow [n x]
+  (if (neg? x)
+    (div 1 (reduce mul (repeat (abs x) n)))
+    (reduce mul (repeat x n))))
+
 (defn- ensure-basic [unit-comp]
   (->> (update-keys unit-comp #(if (fn? %) (%) %))
        (map (fn [[k v]]
               (cond
-                (= :broch/scaled k) {k (rationalize v)}
+                (= :broch/scaled k) {k v}
                 (simple? k) {(measure k) v :broch/scaled (pow (scale-of-base k) v)}
                 :else (into {} (map (fn [[i j]]
                                       {i (if (= :broch/scaled i)
                                            (pow j v)
-                                           (* j v))})
+                                           (mul j v))})
                                     (composition k))))))
        (reduce (fn [acc m]
                  (reduce (fn [acc [k v]]
                            (if (= :broch/scaled k)
-                             (merge-with * acc {k v})
-                             (merge-with + acc {k v})))
+                             (merge-with mul acc {k v})
+                             (merge-with add acc {k v})))
                          acc m))
                {})
        (remove (fn [[_ v]] (= 0 v)))
@@ -163,10 +150,10 @@
 (defn- derive-comp [x y op]
   (->> (reduce (fn [acc [k v]]
                  (cond
-                   (and (= / op) (= :broch/scaled k)) (merge-with * acc {k (/ 1 v)})
-                   (= :broch/scaled k) (merge-with * acc {k v})
-                   (= / op) (merge-with + acc {k (- v)})
-                   :else (merge-with + acc {k v})))
+                   (and (= div op) (= :broch/scaled k)) (merge-with mul acc {k (div 1 v)})
+                   (= :broch/scaled k) (merge-with mul acc {k v})
+                   (= div op) (merge-with add acc {k (neg v)})
+                   :else (merge-with add acc {k v})))
                (composition x) (composition y))
        (filter (comp not zero? second))
        (into {})))
@@ -195,14 +182,14 @@
 (defn boxed-arithmetic [x y op]
   (assert (or (quantity? x) (number? x)) (or (quantity? y) (number? y)))
   (cond
-    (or (= op *) (= op /))
+    (or (= op mul) (= op div))
     (let [x (cond-> x (number? x) (unitless-quantity))
           y (cond-> y (number? y) (unitless-quantity))]
       (if (and (compatible? x y) (not (same-unit? x y)))
         (attempt-derivation x (convert y x) op)
         (attempt-derivation x y op)))
 
-    (or (= op +) (= op -) (= op min) (= op max))
+    (or (= op add) (= op sub) (= op min) (= op max))
     (cond
       (and (number? x) (number? y)) (op x y)
       (and (quantity? x) (number? y)) (quantity x (op (number x) y))
@@ -224,16 +211,20 @@
 
 (def tags {'broch/quantity from-edn})
 #?(:cljs (cljs.reader/register-tag-parser! 'broch/quantity #(from-edn %)))
+(defn- ratio-emit [r]
+  #?(:clj (if (ratio? r)
+            (broch.numbers/->JSRatio (long (numerator r)) (long (denominator r)))
+            r)))
 (defmethod cljs.compiler/emit-constant* Quantity [q]
-  (cljs.compiler/emits "new broch.impl.Quantity(")
-  (cljs.compiler/emits-keyword (measure q))
-  (cljs.compiler/emits ",")
-  (cljs.compiler/emits (str \" (symbol q) \"))
-  (cljs.compiler/emits ",")
-  (cljs.compiler/emit-constant (composition q))
-  (cljs.compiler/emits ",")
-  (cljs.compiler/emit-constant (number q))
-  (cljs.compiler/emits ")"))
+   (cljs.compiler/emits "new broch.impl.Quantity(")
+   (cljs.compiler/emits-keyword (measure q))
+   (cljs.compiler/emits ",")
+   (cljs.compiler/emits (str \" (symbol q) \"))
+   (cljs.compiler/emits ",")
+   (cljs.compiler/emit-constant (update-vals (composition q) ratio-emit))
+   (cljs.compiler/emits ",")
+   (cljs.compiler/emit-constant (ratio-emit (number q)))
+   (cljs.compiler/emits ")"))
 
 
 #?(:clj
@@ -246,4 +237,4 @@
    :cljs
    (extend-protocol IPrintWithWriter
      Quantity
-     (-pr-writer [q writer opts] (-write writer (print-quantity q)))))
+     (-pr-writer [q writer _] (-write writer (print-quantity q)))))

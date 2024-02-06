@@ -1,6 +1,6 @@
 (ns user
   (:require [cider.piggieback]
-            [cljs.repl.node :as node]))
+            [cljs.repl.browser :as browser]))
 
 (defmacro capture-env
   "Capture local bindings.
@@ -29,6 +29,6 @@
 
 (comment
   ;; Start cljs repl
-  (cider.piggieback/cljs-repl (node/repl-env))
+  (cider.piggieback/cljs-repl (browser/repl-env))
 
   )
