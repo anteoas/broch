@@ -6,6 +6,12 @@
   <artifactId>broch</artifactId>
   <version>2024.02.07</version>
   <name>broch</name>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+    </license>
+  </licenses>
   <dependencies>
     <dependency>
       <groupId>org.clojure</groupId>
