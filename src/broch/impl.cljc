@@ -9,7 +9,8 @@
 
 (defn quantity? [x] (satisfies? IQuantity x))
 (defn same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
-(defn compatible? [x y] (or (same-measure? x y) (= (dissoc (composition x)) (composition y))))
+(defn compatible? [x y] (or (same-measure? x y) (= (dissoc (composition x) :broch/scaled)
+                                                   (dissoc (composition y) :broch/scaled))))
 (defn same-unit? [x y] (and (same-measure? x y) (= (symbol x) (symbol y))))
 
 (declare ->base)
