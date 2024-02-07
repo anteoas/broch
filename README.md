@@ -186,7 +186,33 @@ do whatever you need to do in kelvins and then [scale the result yourself](https
 ;=> 71.85
 ```
 
-</details> 
+</details>
+
+<details>
+<summary>What happens whan units with the same composition?</summary>
+
+Some units are defined in terms of the same SI-units. 
+For example, you have both Hertz and Becqerel defined as 1/s, but their measure is different. 
+Hertz measures frequency and Becquerel measures radioactive decay, these measures differ in that one is periodic and the other isn't.
+
+The problem is how to know which unit to use if a calculation returns a composition used by more than one unit, like 1/s.
+```clojure
+(b// (b/meters-per-second 1) (b/meters 1)) ;=> hertz or becquerel?
+```
+Being correct in questions like this is outside the scope of this library. 
+So in cases where the unit compositions are equal broch will just return the unit that was defined first as a default. 
+In this case Hertz:
+```clojure
+(b// (b/meters-per-second 1) (b/meters 1)) ;=> #broch/quantity[1 "Hz"]
+```
+
+And if you need an alternative unit you can explicitly convert it, as these units are compatible, despite having different measure
+, due to having equivalent compositions.
+```clojure
+(b/becquerels (b/hertz 1)) ;=> #broch/quantity[1 "Bq"]
+```
+
+</details>
 
 ## Deploy
 Build jar and deploy to clojars with
