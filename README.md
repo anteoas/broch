@@ -189,10 +189,10 @@ do whatever you need to do in kelvins and then [scale the result yourself](https
 </details>
 
 <details>
-<summary>What happens whan units with the same composition?</summary>
+<summary>What happens when units have the same composition?</summary>
 
 Some units are defined in terms of the same SI-units. 
-For example, you have both Hertz and Becqerel defined as 1/s, but their measure is different. 
+For example, you have both Hertz and Becquerel defined as 1/s, but their measure is different. 
 Hertz measures frequency and Becquerel measures radioactive decay, these measures differ in that one is periodic and the other isn't.
 
 The problem is how to know which unit to use if a calculation returns a composition used by more than one unit, like 1/s.
