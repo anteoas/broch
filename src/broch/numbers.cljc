@@ -175,12 +175,13 @@
                (cljs.compiler/emits ",")
                (cljs.compiler/emit-constant (denom r))
                (cljs.compiler/emits ")"))))
-   :cljs (defmethod cljs.compiler/emit-constant* JSRatio [r]
-           (cljs.compiler/emits "new broch.numbers.JSRatio(")
-           (cljs.compiler/emit-constant (numer r))
-           (cljs.compiler/emits ",")
-           (cljs.compiler/emit-constant (denom r))
-           (cljs.compiler/emits ")")))
+   :cljs (do (require 'cljs.compiler)
+             (defmethod cljs.compiler/emit-constant* JSRatio [r]
+               (cljs.compiler/emits "new broch.numbers.JSRatio(")
+               (cljs.compiler/emit-constant (numer r))
+               (cljs.compiler/emits ",")
+               (cljs.compiler/emit-constant (denom r))
+               (cljs.compiler/emits ")"))))
 
 
 

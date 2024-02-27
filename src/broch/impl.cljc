@@ -230,16 +230,17 @@
                (cljs.compiler/emits ",")
                (cljs.compiler/emit-constant (ratio-emit (number q)))
                (cljs.compiler/emits ")"))))
-   :cljs (defmethod cljs.compiler/emit-constant* Quantity [q]
-           (cljs.compiler/emits "new broch.impl.Quantity(")
-           (cljs.compiler/emits-keyword (measure q))
-           (cljs.compiler/emits ",")
-           (cljs.compiler/emits (str \" (symbol q) \"))
-           (cljs.compiler/emits ",")
-           (cljs.compiler/emit-constant (update-vals (composition q) ratio-emit))
-           (cljs.compiler/emits ",")
-           (cljs.compiler/emit-constant (ratio-emit (number q)))
-           (cljs.compiler/emits ")")))
+   :cljs (do (require 'cljs.compiler)
+             (defmethod cljs.compiler/emit-constant* Quantity [q]
+               (cljs.compiler/emits "new broch.impl.Quantity(")
+               (cljs.compiler/emits-keyword (measure q))
+               (cljs.compiler/emits ",")
+               (cljs.compiler/emits (str \" (symbol q) \"))
+               (cljs.compiler/emits ",")
+               (cljs.compiler/emit-constant (update-vals (composition q) ratio-emit))
+               (cljs.compiler/emits ",")
+               (cljs.compiler/emit-constant (ratio-emit (number q)))
+               (cljs.compiler/emits ")"))))
 
 
 #?(:clj
