@@ -1,7 +1,7 @@
 (ns broch.impl
   (:refer-clojure :exclude [* add - / symbol read-string rationalize])
   (:require [broch.protocols :refer [IQuantity composition measure number symbol]]
-            [broch.numbers :refer [add sub mul div neg]]
+            [broch.numbers :refer [add sub mul div neg] :as nums]
             #?@(:cljs [[cljs.reader]
                        [cljs.compiler]]))
   #?(:clj (:import (clojure.lang IMeta IObj Obj)
@@ -84,7 +84,7 @@
     (nil? x)
     unit
 
-    (number? x)
+    (or (number? x) (nums/ratio? x))
     (quantity* unit x)
 
     (string? x)
@@ -210,26 +210,42 @@
     (throw (ex-info (str "Symbol \"" s "\" not registered!") {:number n :symbol s :registry @symbol-registry}))))
 (defn print-quantity [q] (str "#broch/quantity" (to-edn q)))
 
+(defn from-edn-cljs [[n s]]
+  #?(:clj  (if (ratio? n)
+             (list 'broch.impl/from-edn [(list 'broch.numbers/->JSRatio (double (numerator n)) (double (denominator n))) s])
+             (list 'broch.impl/from-edn [(double n) s]))
+     :cljs (from-edn [n s])))
+
 (def tags {'broch/quantity from-edn})
 #?(:cljs (cljs.reader/register-tag-parser! 'broch/quantity #(from-edn %)))
-(defn- ratio-emit [r]
-  #?(:clj (if (ratio? r)
-            (broch.numbers/->JSRatio (long (numerator r)) (long (denominator r)))
-            r)))
+
+#?(:clj (defn number-constant [r]
+          (if (ratio? r)
+            (nums/->JSRatio (long (numerator r)) (long (denominator r)) )
+            (double r))))
 
 #?(:clj (when (find-ns 'cljs.compiler)
           (require 'cljs.compiler)
           (eval
             '(defmethod cljs.compiler/emit-constant* Quantity [q]
                (cljs.compiler/emits "new broch.impl.Quantity(")
-               (cljs.compiler/emits-keyword (measure q))
+               (cljs.compiler/emit-constant (measure q))
                (cljs.compiler/emits ",")
-               (cljs.compiler/emits (str \" (symbol q) \"))
+               (cljs.compiler/emit-constant (symbol q))
                (cljs.compiler/emits ",")
-               (cljs.compiler/emit-constant (update-vals (composition q) ratio-emit))
+               (cljs.compiler/emit-constant (update-vals (composition q) number-constant))
                (cljs.compiler/emits ",")
-               (cljs.compiler/emit-constant (ratio-emit (number q)))
+               (cljs.compiler/emit-constant (number-constant (number q)))
+               (cljs.compiler/emits ")")))
+          (eval
+            '(defmethod cljs.compiler/emit-constant* broch.numbers.JSRatio [r]
+               (cljs.compiler/emits "new broch.numbers.JSRatio(")
+               (cljs.compiler/emit-constant (nums/numer r))
+               (cljs.compiler/emits ",")
+               (cljs.compiler/emit-constant (nums/denom r))
                (cljs.compiler/emits ")")))))
+
+
 
 
 #?(:clj

@@ -1,2 +1,2 @@
-{broch/unit     broch.core/from-edn
- broch/quantity broch.core/from-edn}
+{broch/unit     #?(:clj broch.impl/from-edn :cljs broch.impl/from-edn-cljs)
+ broch/quantity #?(:clj broch.impl/from-edn :cljs broch.impl/from-edn-cljs)}

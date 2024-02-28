@@ -24,8 +24,8 @@
 (declare ->JSRatio)
 (declare ratio?)
 
-(defn- numer [r] (.-numerator r))
-(defn- denom [r] (.-denominator r))
+(defn numer [r] (.-numerator r))
+(defn denom [r] (.-denominator r))
 
 
 #?(:clj
@@ -165,19 +165,6 @@
   (if (or (weird? a) (weird? b))
     (weird-op a b)
     (downcast (op (upcast a) (upcast b)))))
-
-#?(:clj (when (find-ns 'cljs.compiler)
-          (require 'cljs.compiler)
-          (eval
-            '(defmethod cljs.compiler/emit-constant* JSRatio [r]
-               (cljs.compiler/emits "new broch.numbers.JSRatio(")
-               (cljs.compiler/emit-constant (numer r))
-               (cljs.compiler/emits ",")
-               (cljs.compiler/emit-constant (denom r))
-               (cljs.compiler/emits ")")))))
-
-
-
 
 ;; API
 
