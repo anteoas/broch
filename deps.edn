@@ -1,6 +1,5 @@
 {:paths ["src"]
- :deps  {org.clojure/clojure       {:mvn/version "1.11.1"}
-         org.clojure/clojurescript {:mvn/version "1.11.54"}}
+ :deps  {org.clojure/clojure {:mvn/version "1.11.1"}}
 
  :aliases
  {:dev
@@ -8,6 +7,7 @@
    :extra-deps  {io.github.clojure/tools.build {:git/tag "v0.9.4" :git/sha "76b78fe"}
                  org.clojure/test.check        {:mvn/version "1.1.1"}
                  nrepl/nrepl                   {:mvn/version "0.8.3"}
+                 org.clojure/clojurescript     {:mvn/version "1.11.54"}
                  cider/piggieback              {:mvn/version "0.5.3"}}}
 
   :build  {:deps       {io.github.clojure/tools.build {:git/tag "v0.9.4" :git/sha "76b78fe"}}
