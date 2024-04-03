@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [* + - / < <= > >= max min num symbol])
   (:require [broch.impl :as impl]
             [broch.extensions]
-            [broch.numbers :refer [add sub mul div neg]]
+            [broch.numbers :as nums :refer [add sub mul div neg]]
             [broch.protocols :as p]))
 
 ;;
@@ -16,15 +16,15 @@
 
 (defn measure
   "What this quantity is a measure of."
-  [q] (when-not (number? q) (p/measure q)))
+  [q] (when-not (nums/number? q) (p/measure q)))
 
 (defn symbol
   "The unit symbol for this quantity."
-  [q] (when-not (number? q) (p/symbol q)))
+  [q] (when-not (nums/number? q) (p/symbol q)))
 
 (defn composition
   "The composition of this quantity."
-  [q] (when-not (number? q) (p/composition q)))
+  [q] (when-not (nums/number? q) (p/composition q)))
 
 (defn compatible-units
   "Returns units with the same measure as quantity."
@@ -33,17 +33,21 @@
 
 (defn num
   "Get the number from a quantity. Pass through if already a number."
-  [q] (if (number? q) q (p/number q)))
+  [q] (if (nums/number? q) q (p/number q)))
 
 (defn with-num
   "Make copy of a quantity with a different number."
   [quantity n] (impl/quantity quantity n))
 
 (defn boxed
-  "Transform the quantity's number by any fn (i.e. fmap on the quantity-functor).
-  Also works for numbers."
+  "Transform the quantity's number by any fn (i.e. fmap on the quantity-functor). Also works for numbers.
+
+  Beware:
+  1. The return value is not checked, and quantities with non-numeric values will cause parts of broch to break.
+  2. In cljs, broch quantities will sometimes have a ratio number type that is not a regular js Number.
+     These will fail with clojure.core arithmetic ops (+,-,*,/), so use the ops from broch.core instead."
   [f x]
-  (if (number? x)
+  (if (nums/number? x)
     (f x)
     (impl/boxed f x)))
 
@@ -143,9 +147,9 @@
   "Register a new type of unit with the given measure, symbol, composition and/or scaling.
   Returns a fn (fn [number]) that creates a quantity of this unit."
   ([measure symb scale-or-comp]
-   {:pre  [(keyword? measure) (string? symb) (or (number? scale-or-comp) (map? scale-or-comp))]
+   {:pre  [(keyword? measure) (string? symb) (or (nums/number? scale-or-comp) (map? scale-or-comp))]
     :post [(fn? %)]}
-   (let [composition (if (number? scale-or-comp) {:broch/scaled scale-or-comp} scale-or-comp)
+   (let [composition (if (nums/number? scale-or-comp) {:broch/scaled scale-or-comp} scale-or-comp)
          unit        (impl/unit measure symb composition)]
      (impl/register-unit! unit)
      (fn

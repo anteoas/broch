@@ -1,11 +1,10 @@
 (ns broch.numbers
-  (:refer-clojure :exclude [bigint abs ratio? rationalize integer?])
+  (:refer-clojure :exclude [bigint abs ratio? rationalize integer? number?])
   (:require #?@(:clj  [[clojure.core :as core]]
                 :cljs [[cljs.core :as core]
                        [cljs.math :as math]
-                       [cljs.pprint]])
-            [clojure.string :as str])
-  #?(:clj (:import (clojure.lang Ratio))))
+                       [cljs.pprint]
+                       [clojure.string :as str]])))
 
 (defn bigint [n]
   #?(:clj  (core/bigint n)
@@ -70,6 +69,9 @@
 (defn ratio? [x]
   #?(:clj (core/ratio? x)
      :cljs (instance? JSRatio x)))
+
+(defn number? [x]
+  (or (clojure.core/number? x) (ratio? x)))
 
 #?(:cljs
    (defn- do-in-common-ratio [a b op]
@@ -147,7 +149,7 @@
 #?(:cljs (defn js-ratio->number [^JSRatio r] (/ (js/Number (numer r)) (js/Number (denom r)))))
 
 (defn weird? [n]
-  (or (and (number? n) (NaN? n)) (infinite? n)))
+  (or (and (clojure.core/number? n) (NaN? n)) (infinite? n)))
 
 (defn downcast
   "Downcast if possible without losing precision."

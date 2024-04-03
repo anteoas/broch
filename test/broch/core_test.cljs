@@ -101,11 +101,20 @@
 
 (declare thrown?)
 (deftest number-handling
-  (is (not (b/quantity? 123)))
-  (is (nil? (b/measure 123)))
-  (is (nil? (b/symbol 123)))
-  (is (= 123 (b/num 123)))
-  (is (thrown? js/Error (b/with-num 1 123))))
+  (testing "regular numbers"
+    (is (not (b/quantity? 123)))
+    (is (nil? (b/measure 123)))
+    (is (nil? (b/symbol 123)))
+    (is (= 123 (b/num 123)))
+    (is (thrown? js/Error (b/with-num 1 123)))
+    (is (= 2 (b/boxed #(b/+ % 1) 1))))
+  (testing "JSRatios"
+    (is (not (b/quantity? (b// 1 3))))
+    (is (nil? (b/measure (b// 1 3))))
+    (is (nil? (b/symbol (b// 1 3))))
+    (is (= (b// 1 3) (b/num (b// 1 3))))
+    (is (thrown? js/Error (b/with-num 1 (b// 1 3))))
+    (is (= (b// 4 3) (b/boxed #(b/+ % 1) (b// 1 3))))))
 
 (deftest nil-handling
   (is (thrown? js/Error (b/measure nil)))

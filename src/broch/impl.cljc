@@ -1,11 +1,10 @@
 (ns broch.impl
-  (:refer-clojure :exclude [* add - / symbol read-string rationalize])
+  (:refer-clojure :exclude [* add - / symbol read-string rationalize number? ratio?])
   (:require [broch.protocols :refer [IQuantity composition measure number symbol]]
-            [broch.numbers :refer [add sub mul div neg] :as nums]
+            [broch.numbers :refer [add sub mul div neg number? ratio?] :as nums]
             #?@(:cljs [[cljs.reader]
                        [cljs.compiler]]))
-  #?(:clj (:import (clojure.lang IMeta IObj Obj)
-                   (java.io Writer))))
+  #?(:clj (:import (java.io Writer))))
 
 (defn quantity? [x] (satisfies? IQuantity x))
 (defn same-measure? [x y] (and (quantity? x) (quantity? y) (= (measure x) (measure y))))
@@ -39,7 +38,7 @@
        IEquiv
        (-equiv [this other] (quantities-equal? this other))
        IHash
-       (-hash [this] (hash {:measure -measure :symbol -symbol :number -number}))
+       (-hash [_] (hash {:measure -measure :symbol -symbol :number -number}))
        IComparable
        (-compare [this other] (compare-quantities this other))])
 
@@ -53,7 +52,6 @@
       -composition)))
 
 (defn- quantity* [unit n] (->Quantity (measure unit) (symbol unit) (composition unit) n))
-(defn boxed [f q] (quantity* q (f (number q))))
 (defn simple? [q] (= 1 (get (dissoc (composition q) :broch/scaled) (measure q))))
 
 (defn- safe-scale [n m] (when (and n m) (mul n m)))
@@ -64,7 +62,7 @@
 (defn- convert [a b]
   (let [converted (<-base b (->base a))]
     (cond
-      #?(:clj (ratio? (number a)) :cljs nil) converted
+      (ratio? (number a)) converted
       (nil? (number a)) converted
       (float? (number a)) (quantity* converted (double (number converted)))
       :else (quantity* converted (number converted)))))
@@ -72,7 +70,7 @@
 (defn- converting-op [unit a b op]
   (let [converted (<-base unit (op (->base a) (->base b)))]
     (cond
-      #?(:clj (ratio? (number a)) :cljs nil) converted
+      (ratio? (number a)) converted
       (float? (number a)) (quantity* converted (double (number converted)))
       :else (quantity* converted (number converted)))))
 
@@ -84,7 +82,7 @@
     (nil? x)
     unit
 
-    (or (number? x) (nums/ratio? x))
+    (number? x)
     (quantity* unit x)
 
     (string? x)
@@ -100,6 +98,8 @@
                       {:from x :to unit})))
 
     :else (throw (ex-info (str "Unhandled case: " x " " (type x)) {:unit unit :x x}))))
+
+(defn boxed [f q] (quantity q (f (number q))))
 
 (defn- pow [n x]
   (if (neg? x)

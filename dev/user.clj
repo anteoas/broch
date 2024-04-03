@@ -1,7 +1,8 @@
 (ns user
   (:require [cider.piggieback]
             [cljs.repl.browser :as browser]
-            [clojure.java.shell :as sh]))
+            [clojure.java.shell :as sh]
+            [broch.core]))
 
 (defmacro capture-env
   "Capture local bindings.
