@@ -215,9 +215,9 @@ And if you need an alternative unit you can explicitly convert it, as these unit
 </details>
 
 ## Deploy
-Build jar and deploy to clojars with
-```shell
-$ clj -T:build clean
-$ clj -T:build jar
-$ env CLOJARS_USERNAME=<username> CLOJARS_PASSWORD=<clojars-token> clj -X:deploy
+To build jar and deploy to clojars:
+1. Have username and clojars-token in `.deploy-opts.edn` and run
+2. Run `bin/deploy.bb`
+```shell 
+ bin/deploy.bb
 ```
