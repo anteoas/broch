@@ -89,7 +89,7 @@ The following code assumes this ns definition.
 ```
 
 ### Defining new units
-Broch comes with a bunch of units pre-defined in `broch.core` (more will likely be added in time, requests and PRs are welcome).
+Broch comes with a bunch of units pre-defined in `broch.core` (more will might be added in time).
 
 But defining your own units is a peace-of-cake. 
 
