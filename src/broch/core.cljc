@@ -130,6 +130,7 @@
 ;; Serializing
 (defn from-edn [x] (impl/from-edn x))
 (defn to-edn [u] (impl/to-edn u))
+(def tags impl/tags)
 
 ;;
 ;; Creating units
