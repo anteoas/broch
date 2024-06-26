@@ -54,6 +54,15 @@ The following code assumes this ns definition.
 
 ; and, again, we get sensible errors if incompatible
 (b/- #broch/quantity[2 "km"] #broch/quantity[1 "s"]) ;=> ExceptionInfo "Cannot add/subtract :length and :time"
+
+; if you need it, you can find all equivalent quantities (with the same measure)
+(sort-by b/num (b/equivalent-quantities (b/seconds 1)))
+;=> (#broch/quantity[1/3600 "h"]
+;    #broch/quantity[1/60 "min"]
+;    #broch/quantity[1 "s"]
+;    #broch/quantity[1000 "ms"]
+;    #broch/quantity[1000000 "μs"]
+;    #broch/quantity[1000000000 "ns"])
 ```
 
 ### Derived units
@@ -116,11 +125,11 @@ But defining your own units is a peace-of-cake.
 ; If you provide a composition, the given scaling is relative to the composing units
 ; so you could say for example:
 ; a yard is 0.9144 meters
-(defunit yards :length "yd" 0.9144) :=> #'my-ns/yards 
+(defunit yards :length "yd" 0.9144) ;=> #'my-ns/yards 
 ; and a foot is a third of a yard
-(defunit feet :length "ft" 1/3 {yards 1}) :=> #'my-ns/feet
+(defunit feet :length "ft" 1/3 {yards 1}) ;=> #'my-ns/feet
 ; and there's 12 inches in a foot
-(defunit inches :length "in" 1/12 {feet 1}) :=> #'my-ns/inches
+(defunit inches :length "in" 1/12 {feet 1}) ;=> #'my-ns/inches
 ; and it knows that an inch is scaled 0.0254 of a meter
 (b/meters (b/inches 1)) ;=> #broch/quantity[0.0254 "m"]
 
@@ -128,6 +137,28 @@ But defining your own units is a peace-of-cake.
 (b/defunit me :coolness "me" 1) ;=> #'my-ns/me
 (b/defunit rich-hickey :coolness "DJ Rich" 1000) ;=> #'my-ns/rich-hickey
 (= #broch/quantity[1 "DJ Rich"] #broch/quantity[1000 "me"]) ;=> true
+```
+
+### Formatting
+```clojure
+; The standard print is a tagged literal with number and unit symbol
+#broch/quantity[1000 "m"]
+; which is useful for developers, but not so much for everyone else
+
+; str gives a more readable string
+(str #broch/quantity[1000 "m"]) ;=> "1000 m" 
+
+; and you can use the provided `nicest` fn to get a "nicer" unit, given some compatible options
+(str (b/nicest #broch/quantity[1000 "m"] [b/meters b/kilometers])) ;=> "1 km"
+; "niceness" is defined to be the unit with the shortest number, 
+; and it prefers non-ratios when possible as they can be hard to read
+
+; Localization is out of scope for broch.
+; A lot of languages use latin unit symbols for SI-units, so you might not need to translate those,
+; but you can use `b/num` and `b/symbol` to format and translate however you like, f.ex.:
+(str (format-number language (b/num q)) " " 
+     (translate-symbol language (b/symbol q)))
+
 ```
 
 ## Tradeoffs
