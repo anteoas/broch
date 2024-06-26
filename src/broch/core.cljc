@@ -38,8 +38,7 @@
 (defn equivalent-quantities
   "Returns quantities with compatible units equivalent to the given one."
   [quantity]
-  (->> (compatible-units quantity)
-       (map #(impl/quantity % quantity))))
+  (map #(impl/quantity % quantity) (compatible-units quantity)))
 
 (defn nicest
   "Returns the quantity converted to the \"nicest\" compatible unit for printing.
