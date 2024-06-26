@@ -4,6 +4,8 @@
             [clojure.test :refer [deftest is are testing run-tests]]
             [cljs.reader :refer [read-string]]))
 
+(declare thrown?)
+
 (def unit-fns (->> (ns-interns 'broch.core)
                    (filter (fn [[_ v]]
                              (try (b/quantity? (v))
@@ -41,6 +43,13 @@
         nil (b/composition n)
         n (b/num n)
         124.456 (b/boxed inc n)))))
+
+(deftest nicest
+  (are [x y] (= x y)
+             [100 "NM"] (b/to-edn (b/nicest (b/meters 185200)))
+             [185.2 "km"] (b/to-edn (b/nicest (b/meters 185200) [b/meters b/kilometers]))
+             [0.1016 "m"] (b/to-edn (b/nicest #broch/quantity[1/3 "ft"] [b/feet b/meters])))
+  (is (thrown? ExceptionInfo (b/nicest (b/meters 1) [1]))))
 
 
 (deftest composition
@@ -99,7 +108,6 @@
     #broch/quantity[12000 "J"] (b/* #broch/quantity[12 "N"] #broch/quantity[1 "km"])
     #broch/quantity[1/450 "m/s²"] (b// #broch/quantity[8 "m/s"] #broch/quantity[1 "h"])))
 
-(declare thrown?)
 (deftest number-handling
   (testing "regular numbers"
     (is (not (b/quantity? 123)))

@@ -1,17 +1,18 @@
 (ns broch.core-test
-  (:require
-   [broch.core :as b]
-   [clojure.test :refer [are deftest is testing]]
-   [clojure.test.check.clojure-test :refer [defspec]]
-   [clojure.test.check.generators :as gen]
-   [clojure.test.check.properties :as prop]))
+  (:require [broch.core :as b]
+            [clojure.test :refer [are deftest is testing]]
+            [clojure.test.check.clojure-test :refer [defspec]]
+            [clojure.test.check.generators :as gen]
+            [clojure.test.check.properties :as prop])
+  (:import (clojure.lang ExceptionInfo)))
+
+(declare thrown?)
 
 (def unit-fns (->> (ns-interns 'broch.core)
                    (filter (fn [[_ v]]
                              (try (b/quantity? (v))
                                   (catch Exception _ false))))
                    (map second)))
-
 
 (deftest readers
   (doseq [u unit-fns]
@@ -36,7 +37,8 @@
         1234 (b/num (b/with-num m 1234))
         #broch/quantity[124 "m"] (b/boxed inc m)
         (b/from-edn [123 "m"]) m
-        [123 "m"] (b/to-edn m))))
+        [123 "m"] (b/to-edn m)
+        [1 "NM"] (b/to-edn (b/nicest (b/meters 1852))))))
   (testing "for numbers"
     (let [n 123.456]
       (is (not (b/quantity? n)))
@@ -46,6 +48,13 @@
         nil (b/composition n)
         n (b/num n)
         124.456 (b/boxed inc n)))))
+
+(deftest nicest
+  (are [x y] (= x y)
+    [100 "NM"] (b/to-edn (b/nicest (b/meters 185200)))
+    [185.2 "km"] (b/to-edn (b/nicest (b/meters 185200) [b/meters b/kilometers]))
+    [0.1016 "m"] (b/to-edn (b/nicest (b/feet 1/3) [b/feet b/meters])))
+  (is (thrown? ExceptionInfo (b/nicest (b/meters 1) [1]))))
 
 (deftest composition
   (testing "computing scale"
@@ -126,7 +135,6 @@
     (is (op-equal? 'min n m) (str "min" n m))
     (is (op-equal? 'max n m) (str "max" n m))))
 
-(declare thrown?)
 (deftest number-handling
   (is (not (b/quantity? 123)))
   (is (nil? (b/measure 123)))
@@ -160,4 +168,5 @@
 
 
 (comment
-  (clojure.test/run-tests))
+  (clojure.test/run-tests)
+  )

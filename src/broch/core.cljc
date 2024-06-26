@@ -14,6 +14,10 @@
   "Is this a quantity?"
   [q] (impl/quantity? q))
 
+(defn num
+  "Get the number from a quantity. Pass through if already a number."
+  [q] (if (nums/number? q) q (p/number q)))
+
 (defn measure
   "What this quantity is a measure of."
   [q] (when-not (nums/number? q) (p/measure q)))
@@ -31,9 +35,30 @@
   [quantity]
   (filter #(= (measure quantity) (measure %)) (vals @impl/symbol-registry)))
 
-(defn num
-  "Get the number from a quantity. Pass through if already a number."
-  [q] (if (nums/number? q) q (p/number q)))
+(defn nicest
+  "Returns the quantity converted to the \"nicest\" compatible unit for printing.
+
+   \"nicest\" being defined as the one with the shortest printed number,
+   preferring precise doubles over ratios if available (as ratios can be harder to read).
+
+   The 1-arity implementation uses all compatible units as options.
+   This is not recommended for most cases, as broch includes some \"weird\" units that are often unwanted.
+
+   Example:
+   (b/nicest (b/meters 18520)) => #broch/quantity[10 \"NM\"] ; nautical miles may be unwanted
+   (b/nicest (b/meters 18520) [b/meters b/kilometers]) => #broch/quantity[18.52 \"km\"]"
+  ([quantity]
+   (nicest quantity (compatible-units quantity)))
+  ([quantity unit-options]
+   (let [opts (map (fn [unit-opt] (cond
+                                    (fn? unit-opt) (unit-opt quantity)
+                                    (quantity? unit-opt) (impl/quantity unit-opt quantity)
+                                    :else (throw (ex-info (str "Invalid unit-option type: " (type unit-opt))
+                                                          {:unit-option unit-opt}))))
+                   unit-options)]
+     (apply min-key (comp count str num)
+            (or (not-empty (filter (comp not nums/ratio? num) opts))
+                opts)))))
 
 (defn with-num
   "Make copy of a quantity with a different number."
@@ -151,7 +176,7 @@
    {:pre  [(keyword? measure) (string? symb) (or (nums/number? scale-or-comp) (map? scale-or-comp))]
     :post [(fn? %)]}
    (let [composition (if (nums/number? scale-or-comp) {:broch/scaled scale-or-comp} scale-or-comp)
-         unit        (impl/unit measure symb composition)]
+         unit (impl/unit measure symb composition)]
      (impl/register-unit! unit)
      (fn
        ([] unit)
