@@ -4,10 +4,11 @@
 A library for handling numbers with units. 
 
 Main Features:
-* Conversion, comparison and arithmetic.
-* Data literals
+* Conversion, comparison and arithmetic
+* Large and extendible set of available units
+* Data literals for easy transmission and storage
 * Clojurescript compatible
-* No dependencies
+* No extra dependencies
 
 Named after [Ole Jacob Broch](https://en.wikipedia.org/wiki/Ole_Jacob_Broch) 
 for his contributions as director of the 
@@ -22,8 +23,6 @@ There is some disagreement on what to name things in this space, but I've settle
 - `quantity` = a `number` with a `unit`. 
 
 ## Usage
-The ergonomics for handling units is inspired by the excellent 
-[tick.core](https://github.com/juxt/tick#tick).
 
 The following code assumes this ns definition.
 ```clojure 
@@ -244,6 +243,10 @@ And if you need an alternative unit you can explicitly convert it, as these unit
 ```
 
 </details>
+
+## Credit 
+The ergonomics for handling units is inspired by the excellent 
+[tick.core](https://github.com/juxt/tick#tick).
 
 ## Deploy
 To build jar and deploy to clojars:
