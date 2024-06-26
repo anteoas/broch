@@ -35,6 +35,12 @@
   [quantity]
   (filter #(= (measure quantity) (measure %)) (vals @impl/symbol-registry)))
 
+(defn equivalent-quantities
+  "Returns quantities with compatible units equivalent to the given one."
+  [quantity]
+  (->> (compatible-units quantity)
+       (map #(impl/quantity % quantity))))
+
 (defn nicest
   "Returns the quantity converted to the \"nicest\" compatible unit for printing.
 
