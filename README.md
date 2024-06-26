@@ -17,7 +17,7 @@ for his contributions as director of the
 ![](https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Ole_Jacob_Broch.png/375px-Ole_Jacob_Broch.png)
 
 ## Names
-There is some disagreement on what to name things in this space, but I've settled on these definitions:
+There is some disagreement on what to name things in this space, but we've settled on these definitions:
 - `measure` = the thing that is measured. (i.e `:length` or `:time`)
 - `unit` = a `measure` with a set `scaling` and a `symbol`. (the scaling is based in SI units) 
 - `quantity` = a `number` with a `unit`. 
