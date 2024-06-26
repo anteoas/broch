@@ -3,7 +3,7 @@
 # Broch
 A library for handling numbers with units. 
 
-Main Features:
+Key Features:
 * Conversion, comparison and arithmetic
 * Large and extendible set of available units
 * Data literals for easy transmission and storage
