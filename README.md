@@ -4,7 +4,7 @@
 A library for handling numbers with units. 
 
 Key Features:
-* Conversion, comparison and arithmetic
+* Simple conversion, comparison and arithmetic of compatible quantities
 * Large and extendible set of available units
 * Data literals for easy transmission and storage
 * Clojurescript compatible
