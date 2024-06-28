@@ -8,7 +8,7 @@ Key Features:
 * Large and extendible set of available units
 * Data literals for easy transmission and storage
 * Clojurescript compatible
-* No extra dependencies
+* No additional dependencies
 
 Named after [Ole Jacob Broch](https://en.wikipedia.org/wiki/Ole_Jacob_Broch) 
 for his contributions as director of the 
