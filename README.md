@@ -1,7 +1,10 @@
 [![Clojars Project](https://img.shields.io/clojars/v/no.anteo/broch.svg)](https://clojars.org/no.anteo/broch)
 
 # Broch
-A library for handling numbers with units. 
+Handling numbers with units. 
+
+The math of unit conversions is not very complicated, but it's still easy to get wrong. Especially when you need to remember what unit is used at different points in your system.
+Brochs approach is to combine numbers with units into a quantity, and provide tools for working with these. 
 
 Key Features:
 * Simple conversion, comparison and arithmetic of compatible quantities
