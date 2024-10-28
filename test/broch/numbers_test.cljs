@@ -1,5 +1,5 @@
 (ns broch.numbers-test
-  (:require [broch.numbers :refer [bigint abs add sub mul div neg upcast downcast]]
+  (:require [broch.numbers :refer [->bigint abs* add sub mul div neg upcast downcast]]
             [clojure.test :refer [deftest is are run-tests testing]]))
 
 (deftest upcast-test
@@ -18,8 +18,8 @@
 
 (deftest arithmetic
   (testing "abs"
-    (is (= 1 (abs -1)))
-    (is (= (bigint 1) (abs (bigint -1)))))
+    (is (= 1 (abs* -1)))
+    (is (= (->bigint 1) (abs* (->bigint -1)))))
 
   (testing "doubles"
     (is (= (+ 0.01 0.002) (add 0.01 0.002)))
