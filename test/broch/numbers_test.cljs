@@ -1,14 +1,20 @@
 (ns broch.numbers-test
   (:require [broch.numbers :refer [bigint abs add sub mul div neg upcast downcast]]
-            [clojure.test :refer [deftest is run-tests testing]]))
+            [clojure.test :refer [deftest is are run-tests testing]]))
 
-(deftest js-rationalize-test
-  (is (= 1.5 (downcast (upcast 1.5))))
-  (is (= 1760.9144 (downcast (upcast 1760.9144))))
-  (is (= 0.012 (downcast (upcast 0.012))))
-  (is (= 1 (downcast (upcast 1))))
-  (is (= (div 1 100) 0.01)))
-
+(deftest upcast-test
+  (testing "downcast and upcast are opposites"
+    (are [n] (= n (downcast (upcast n)))
+      1.5
+      1760.9144
+      0.012
+      1
+      -0.5
+      -1.5
+      -11.4))
+  (testing "upcast negatives"
+    (is (= (neg (upcast 1.5)) (upcast -1.5)))
+    (is (= (neg (upcast 11.4)) (upcast -11.4)))))
 
 (deftest arithmetic
   (testing "abs"
@@ -21,7 +27,8 @@
     (is (= (* 0.01 0.002) (mul 0.01 0.002)))
     (is (= (/ 0.01 0.002) (div 0.01 0.002)))
     (is (= (- 3) (neg 3)))
-    (is (= 1.23E-4 (mul 123 1.0E-6))))
+    (is (= 1.23E-4 (mul 123 1.0E-6)))
+    (is (= (div 1 100) 0.01)))
 
   (testing "ints"
     (is (= (+ 1 2) (add 1 2)))

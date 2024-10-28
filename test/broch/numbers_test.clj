@@ -1,6 +1,20 @@
 (ns broch.numbers-test
-  (:require [broch.numbers :refer [abs add bigint div mul neg sub]]
+  (:require [broch.numbers :refer [abs add bigint div mul neg sub upcast downcast]]
             [clojure.test :refer :all]))
+
+(deftest upcast-test
+  (testing "downcast and upcast are opposites"
+    (are [n] (= n (downcast (upcast n)))
+      1.5
+      1760.9144
+      0.012
+      1
+      -0.5
+      -1.5
+      -11.4))
+  (testing "upcast negatives"
+    (is (= (neg (upcast 1.5)) (upcast -1.5)))
+    (is (= (neg (upcast 11.4)) (upcast -11.4)))))
 
 (deftest arithmetic
   (testing "abs"

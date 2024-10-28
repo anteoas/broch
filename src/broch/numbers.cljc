@@ -104,6 +104,7 @@
   #?(:clj (core/integer? n)
      :cljs (or (int? n) (= js/BigInt (type n)))))
 
+(declare neg)
 (defn rationalize [n]
   #?(:clj (core/rationalize n)
      :cljs
@@ -117,26 +118,10 @@
                                             (if (neg? exp)
                                               (->JSRatio (bigint 1) factor)
                                               (->JSRatio factor (bigint 1)))))
-        (< (abs n) 1) (->JSRatio (as-> (str n) $
-                                       (str/split $ #"\.")
-                                       (second $)
-                                       (js/Number $)
-                                       (cond-> $ (neg? n) (-))
-                                       (bigint $))
-                                 (as-> (str n) $
-                                       (str/split $ #"\.")
-                                       (second $)
-                                       (count $)
-                                       (repeat $ 10)
-                                       (reduce * $)
-                                       (bigint $)))
-        :else (as-> (str n) $
-                    (str/split $ #"\.")
-                    (second $)
-                    (str "0." $)
-                    (js/Number $)
-                    (cond-> $ (neg? n) (-))
-                    (add* (rationalize $) (rationalize (abs (long n)))))))))
+        :else (let [d-str (second (str/split (str n) #"\."))]
+                (add* (rationalize (long n))
+                      (->JSRatio (bigint (cond-> (js/Number d-str) (neg? n) (-)))
+                                 (bigint (reduce * (repeat (count d-str) 10))))))))))
 
 (defn upcast
   "Make a number into a ratio."
