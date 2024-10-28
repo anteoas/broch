@@ -26,6 +26,8 @@
 (defn numer [r] (.-numerator r))
 (defn denom [r] (.-denominator r))
 
+(defn js-ratio [n m]
+  (->JSRatio (bigint n) (bigint m)))
 
 #?(:clj
    (deftype JSRatio [numerator denominator]
@@ -58,16 +60,16 @@
      (add* [this other] (do-in-common-ratio this (upcast other) +))
      (sub* [this other] (do-in-common-ratio this (upcast other) -))
      (mul* [_ other] (let [other-r (upcast other)]
-                      (lowest-equiv-ratio
-                       (->JSRatio (* (bigint numerator) (numer other-r))
+                       (lowest-equiv-ratio
+                        (js-ratio (* (bigint numerator) (numer other-r))
                                   (* (bigint denominator) (denom other-r))))))
      (div* [_ other] (let [other-r (upcast other)]
-                      (lowest-equiv-ratio
-                       (->JSRatio (* (bigint numerator) (denom other-r))
+                       (lowest-equiv-ratio
+                        (js-ratio (* (bigint numerator) (denom other-r))
                                   (* (numer other-r) (bigint denominator))))))))
 
 (defn ratio? [x]
-  #?(:clj (core/ratio? x)
+  #?(:clj  (core/ratio? x)
      :cljs (instance? JSRatio x)))
 
 (defn number? [x]
@@ -79,9 +81,9 @@
            [nb db] [(bigint (numer b)) (bigint (denom b))]]
        (lowest-equiv-ratio
         (if (= da db)
-          (->JSRatio (op na nb) da)
-          (->JSRatio (op (* na db) (* nb da))
-                     (* da db)))))))
+          (js-ratio (op na nb) da)
+          (js-ratio (op (* na db) (* nb da))
+                    (* da db)))))))
 
 #?(:cljs
    (defn- gcd
@@ -98,10 +100,10 @@
            denom (/ (denom r) d)]
        (if (= denom 1)
          num
-         (->JSRatio num denom)))))
+         (js-ratio num denom)))))
 
 (defn integer? [n]
-  #?(:clj (core/integer? n)
+  #?(:clj  (core/integer? n)
      :cljs (or (int? n) (= js/BigInt (type n)))))
 
 (declare neg)
@@ -110,25 +112,25 @@
      :cljs
      (lowest-equiv-ratio
       (cond
-        (ratio? n) (->JSRatio (bigint (numer n)) (bigint (denom n)))
-        (integer? n) (->JSRatio (bigint n) (bigint 1))
+        (ratio? n) (js-ratio (numer n) (denom n))
+        (integer? n) (js-ratio n 1)
         (str/includes? (str n) "e") (let [[num exp] (str/split (str n) #"e")
-                                          factor (bigint (math/pow 10 (abs (js/Number exp))))]
+                                          factor (math/pow 10 (abs (js/Number exp)))]
                                       (mul* (rationalize (js/Number num))
                                             (if (neg? exp)
-                                              (->JSRatio (bigint 1) factor)
-                                              (->JSRatio factor (bigint 1)))))
+                                              (js-ratio 1 factor)
+                                              (js-ratio factor 1))))
         :else (let [d-str (second (str/split (str n) #"\."))]
                 (add* (rationalize (long n))
-                      (->JSRatio (bigint (cond-> (js/Number d-str) (neg? n) (-)))
-                                 (bigint (reduce * (repeat (count d-str) 10))))))))))
+                      (js-ratio (cond-> (js/Number d-str) (neg? n) (-))
+                                (reduce * (repeat (count d-str) 10)))))))))
 
 (defn upcast
   "Make a number into a ratio."
   [n]
-  #?(:clj (if (integer? n)
-            (bigint n)
-            (rationalize n))
+  #?(:clj  (if (integer? n)
+             (bigint n)
+             (rationalize n))
      :cljs (rationalize n)))
 
 #?(:cljs (defn js-ratio->number [^JSRatio r] (/ (js/Number (numer r)) (js/Number (denom r)))))
