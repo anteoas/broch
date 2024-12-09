@@ -168,8 +168,14 @@
 
 (defn quantity
   "Makes a new quantity of unit and x.
-  - unit must be a quantity (but the number part is ignored).
-  - x must be number-ish, i.e. a number, string of number, or another quantity.
+
+  `unit` must be a quantity type (but the number part is ignored, and can be nil).
+
+  `x` must be number-ish, i.e. a number, string of a number, or another quantity.
+
+    If x is a string, it's read with `clojure.core/read-string` and throws if it's not a number.
+    (Beware of using this on raw user input, since it won't read localized numbers with different decimal marks correctly, like \"12,1\")
+
     If x is a quantity, it will be converted (or throw exception if incompatible)."
   [unit x]
   (impl/quantity unit x))
@@ -354,4 +360,3 @@
 (def becquerels (new-unit :radioactivity "Bq" {seconds -1}))
 (def grays (new-unit :absorbed-dose "Gy" {joules 1 kilograms -1}))
 (def sieverts (new-unit :equivalent-dose "Sv" {joules 1 kilograms -1}))
-
