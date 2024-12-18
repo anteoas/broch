@@ -15,7 +15,7 @@
   [q] (impl/quantity? q))
 
 (defn num
-  "Get the number from a quantity. Pass through if already a number."
+  "Get just the number value of a quantity. Pass through if already a number."
   [q] (if (nums/number? q) q (p/number q)))
 
 (defn measure
