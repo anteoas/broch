@@ -85,7 +85,8 @@ The following code assumes this ns definition.
 (b/composition (b/kilowatts 4))
 ;=> {:mass 1, :length 2, :time -3, :broch/scaled 1000}
 
-; this allows more complicated arithmetic (* and /) to derive the correct unit and convert the quantity, if it's defined
+; this allows more complicated arithmetic (* and /) to derive the correct unit
+; and convert the quantity, if it's defined
 (b/* #broch/quantity[3 "m/s²"] #broch/quantity[3 "s"]) ;=> #broch/quantity[9 "m/s"]
 (b/* #broch/quantity[12 "kW"] #broch/quantity[5 "h"]) ;=> #broch/quantity[60 "kWh"]
 (b// #broch/quantity[12 "J"] #broch/quantity[1 "km"]) ;=> #broch/quantity[0.12 "N"]
@@ -109,19 +110,21 @@ But defining your own units is a peace-of-cake.
 (b/measure #broch/quantity[1 "m"]) ;=> :speed 
 (b/symbol #broch/quantity[1 "m"]) ;=> "m" (same as in the tag literal)
 
-; broch uses the measure to know how to convert and derive units
-; both must be given when defining the unit along with its scale from the "base" unit of that measure
+; broch uses the measure to know how to convert and derive units,
+; both must be given when defining the unit along with its scale
+; from the "base" unit of that measure.
 (b/defunit meters :length "m" 1) ;=> #'my-ns/meters
 (b/defunit seconds :time "s" 1) ;=> #'my-ns/seconds
 
 ; The built-in units rely on the SI-system for measures and their base units. 
-; So the meter is the base unit of :length, and other units of :length must specify their scale relative to it. 
+; So the meter is the base unit of :length, and other units of :length must specify
+; their scale relative to it. 
 (b/defunit feet :length "ft" 0.3048) ;=> #'my-ns/feet  
 
 ; derived units are similar, but also take a unit-map giving their composition
 (b/defunit meters-per-second :speed "m/s" {meters 1 seconds -1} 1) ;=> #'my-ns/meters-per-second
-; Also note that since these units are already defined, running the `defunit` forms above would print warnings like 
-; "WARN: a unit with symbol m already exists! Overriding..." 
+; Also note that since these units are already defined, running the `defunit` forms above
+; would print warnings like: "WARN: a unit with symbol m already exists! Overriding..." 
 ; You probably don't want to override taken symbols, make up a new one instead.
 
 ; If you provide a composition, the given scaling is relative to the composing units
@@ -150,13 +153,13 @@ But defining your own units is a peace-of-cake.
 ; str gives a more readable string
 (str #broch/quantity[1000 "m"]) ;=> "1000 m" 
 
-; and you can use the provided `nicest` fn to get a "nicer" unit, given some compatible options
+; and you can use the provided `nicest` fn to get a "nicer" unit, given compatible options
 (str (b/nicest #broch/quantity[1000 "m"] [b/meters b/kilometers])) ;=> "1 km"
 ; "niceness" is defined to be the unit with the shortest number, 
 ; and it prefers non-ratios when possible as they can be hard to read
 
 ; Localization is out of scope for broch.
-; A lot of languages use latin unit symbols for SI-units, so you might not need to translate those,
+; A lot of languages use latin unit symbols for SI-units, so you might not need to translate,
 ; but you can use `b/num` and `b/symbol` to format and translate however you like, f.ex.:
 (str (format-number language (b/num q)) " " 
      (translate-symbol language (b/symbol q)))
