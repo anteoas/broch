@@ -26,6 +26,10 @@ There is some disagreement on what to name things in this space, but we've settl
 - `quantity` = a `number` with a `unit`. 
 
 ## Usage
+Add this to deps.edn:
+```edn
+no.anteo/broch {:mvn/version "2024.12.18"}
+```
 
 The following code assumes this ns definition.
 ```clojure 
