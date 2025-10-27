@@ -283,6 +283,16 @@ And if you need an alternative unit you can explicitly convert it, as these unit
 
 </details>
 
+<details>
+<summary>What's up with the calendar versioning?</summary>
+
+This library does not use the common semantic versioning scheme because it is not intended to keep changing.
+It's considered "complete" in its current form and will not have any breaking changes (at least not intentionally).
+Any changes to this library will be additions and will always be backwards compatible.
+So, since non-breakage can be assumed, the more relevant information about a version is when it was made. Which is why that's right there in the name. 
+
+</details>
+
 ## Credit 
 The ergonomics for handling units is inspired by the excellent 
 [tick.core](https://github.com/juxt/tick#tick).
