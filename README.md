@@ -170,6 +170,35 @@ But defining your own units is a peace-of-cake.
 
 ```
 
+### Working with data
+Sometimes you want to refer to just a unit or a measure (like `"kg"` or `:mass`) without a specific number, and do some logic with these directly. 
+Broch has some helper functions for working with units and measures. 
+```clojure 
+; What is measured by this unit? 
+(b/symbol->measure "kg") ;=> :mass
+(b/symbol->measure "m/s") ;=> :speed
+
+; What units do we have for a measure?
+(b/measure->symbols :mass) ;=> #{"pg" "LT" "oz" "lbs" "t" "ng" "µg" "kg" "g" "ST" "mg"}
+(b/measure->symbols :speed) ;=> #{"m/s" "kn" "mi/h" "km/h"}
+
+; What is the standard unit for a measure? (meaning it has a scale of 1)
+(b/standard-unit :mass) ;=> "kg"
+(b/standard-unit :speed) ;=> "m/s"
+
+; What is the composition of this unit?
+(b/symbol->composition "m/s") ;=> {:length 1, :time -1, :broch/scaled 1}
+(b/symbol->composition "km/h"); => {:length 1, :time -1, :broch/scaled 5/18}
+(b/symbol->composition "mi/h") ;=> {:length 1, :time -1, :broch/scaled 0.44704}
+
+; What units are registered? 
+(b/registered-unit-symbols) ;=> #{"kg" "m/s" ...}
+
+; What measures are registered?
+(b/registered-measures) ;=> #{:mass :speed ...}
+```
+These fns work by looking up registered units in broch's registry atoms.
+
 ## Tradeoffs
 This library is not written for high performance. 
 It rather tries to be as accurate as possible and avoid precision loss with floating-point numbers. 

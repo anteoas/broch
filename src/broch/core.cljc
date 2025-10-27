@@ -19,7 +19,7 @@
   [q] (if (nums/number? q) q (p/number q)))
 
 (defn measure
-  "What this quantity is a measure of."
+  "The measure this quantity measures."
   [q] (when-not (nums/number? q) (p/measure q)))
 
 (defn symbol
@@ -31,7 +31,7 @@
   [q] (when-not (nums/number? q) (p/composition q)))
 
 (defn compatible-units
-  "Returns units with the same measure as quantity."
+  "Returns unit-quantities with the same measure as the given quantity."
   [quantity]
   (filter #(= (measure quantity) (measure %)) (vals @impl/symbol-registry)))
 
@@ -44,10 +44,10 @@
   "Returns the quantity converted to the \"nicest\" compatible unit for printing.
 
    \"nicest\" being defined as the one with the shortest printed number,
-   preferring precise doubles over ratios if available (as ratios can be harder to read).
+   preferring precise doubles to ratios if available (as ratios can be harder to read).
 
    The 1-arity implementation uses all compatible units as options.
-   This is not recommended for most cases, as broch includes some \"weird\" units that are often unwanted.
+   This is not recommended for most cases, as Broch includes some \"weird\" units that are often unwanted.
 
    Example:
    (b/nicest (b/meters 18520)) => #broch/quantity[10 \"NM\"] ; nautical miles may be unwanted
@@ -70,12 +70,12 @@
   [quantity n] (impl/quantity quantity n))
 
 (defn boxed
-  "Transform the quantity's number by any fn (i.e. fmap on the quantity-functor). Also works for numbers.
+  "Transform the quantity's number by any fn (i.e., fmap on the quantity-functor). Also works for numbers.
 
   Beware:
-  1. The return value is not checked, and quantities with non-numeric values will cause parts of broch to break.
+  1. The return value is not checked, and quantities with non-numeric values will cause parts of Broch to break.
   2. In cljs, broch quantities will sometimes have a ratio number type that is not a regular js Number.
-     These will fail with clojure.core arithmetic ops (+,-,*,/), so use the ops from broch.core instead."
+     These will fail with clojure.core arithmetic ops (+, -, *, /), so use the ops from broch.core instead."
   [f x]
   (if (nums/number? x)
     (f x)
@@ -84,6 +84,49 @@
 (defn box
   "Like boxed but partial."
   [f] (fn [x] (boxed f x)))
+
+(defn symbol->measure
+  "The measure of a registered unit symbol.
+   Returns nil if the symbol is unknown."
+  [unit-symbol]
+  (some-> (get @impl/symbol-registry unit-symbol)
+          (measure)))
+
+(defn symbol->composition
+  "All registered unit symbols for the measure m."
+  [unit-symbol]
+  (some-> (get @impl/symbol-registry unit-symbol)
+          (composition)))
+
+(defn measure->symbols
+  "All registered unit symbols for the measure m."
+  [m]
+  (->> @impl/symbol-registry
+       (keep (fn [[unit-symbol q]] (when (= (measure q) m)
+                                     unit-symbol)))
+       (set)))
+
+(defn standard-unit
+  "The standard unit symbol for the measure m.
+
+   Defined as the unit with a :broch/scaled of 1 in its composition map.
+   Normally an SI-unit or a non-scaled composition of SI-units.
+   Returns nil if m is unknown or no unscaled unit is defined."
+  [m]
+  (->> @impl/composition-registry
+       (some (fn [[comp q]] (when (and (= (measure q) m)
+                                       (= 1 (:broch/scaled comp)))
+                              (symbol q))))))
+
+(defn registered-unit-symbols
+  "All registered unit symbols"
+  []
+  (set (keys @impl/symbol-registry)))
+
+(defn registered-measures
+  "All registered measures"
+  []
+  (set (map measure (vals @impl/symbol-registry))))
 
 (defn +
   ([] 0)
@@ -169,16 +212,20 @@
 (defn quantity
   "Makes a new quantity of unit and x.
 
-  `unit` must be a quantity type (but the number part is ignored, and can be nil).
+  `unit` must be either a string representing a registered unit symbol or a quantity type.
 
   `x` must be number-ish, i.e. a number, string of a number, or another quantity.
 
     If x is a string, it's read with `clojure.core/read-string` and throws if it's not a number.
-    (Beware of using this on raw user input, since it won't read localized numbers with different decimal marks correctly, like \"12,1\")
+    (Do not use this on raw user input, since it won't read localized numbers with different decimal marks correctly, like \"12,1\")
 
-    If x is a quantity, it will be converted (or throw exception if incompatible)."
+    If x is another quantity, it will be converted (or throw exception if incompatible)."
   [unit x]
-  (impl/quantity unit x))
+  (if (quantity? unit)
+    (impl/quantity unit x)
+    (if-let [q (get @impl/symbol-registry unit)]
+      (impl/quantity q x)
+      (throw (ex-info (str "Unknown unit symbol: " unit) {:symbol unit})))))
 
 (defn new-unit
   "Register a new type of unit with the given measure, symbol, composition and/or scaling.
@@ -187,7 +234,7 @@
    {:pre  [(keyword? measure) (string? symb) (or (nums/number? scale-or-comp) (map? scale-or-comp))]
     :post [(fn? %)]}
    (let [composition (if (nums/number? scale-or-comp) {:broch/scaled scale-or-comp} scale-or-comp)
-         unit (impl/unit measure symb composition)]
+         unit        (impl/unit measure symb composition)]
      (impl/register-unit! unit)
      (fn
        ([] unit)

@@ -165,7 +165,24 @@
   (is (= (b/meters 10) (b/min (b/meters 10) (b/max (b/kilometers 7) (b/meters 8)))))
   (is (= (b/kilometers 7) (b/max (b/meters 10) (b/kilometers 7) 88))))
 
+(deftest symbol->measure-test
+  (is (= :mass (b/symbol->measure "kg")))
+  (is (= :speed (b/symbol->measure "m/s")))
+  (is (nil? (b/symbol->measure "undefined"))))
 
+(deftest measure->symbol-test
+  (is (contains? (b/measure->symbols :mass) "kg"))
+  (is (contains? (b/measure->symbols :speed) "m/s"))
+  (is (empty? (b/measure->symbols :undefined)))
+  )
+
+(deftest standard-unit-test
+  (is (= "kg" (b/standard-unit :mass)))
+  (is (= "m/s" (b/standard-unit :speed))))
+
+(deftest symbol->composition-test
+  (is (= {:broch/scaled 1, :mass 1} (b/symbol->composition "kg")))
+  (is (= {:length 1, :broch/scaled 1, :time -1} (b/symbol->composition "m/s"))))
 
 (comment
   (clojure.test/run-tests)
