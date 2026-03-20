@@ -1,5 +1,6 @@
 (ns broch.core-test
   (:require [broch.core :as b]
+            [broch.impl :as impl]
             [broch.numbers :refer [add sub mul div js-ratio->number]]
             [clojure.test :refer [deftest is are testing run-tests]]
             [cljs.reader :refer [read-string]]))
@@ -81,7 +82,15 @@
     (is (= #broch/quantity[36 "km/h"] #broch/quantity[36 "km/h"]))
     (is (= #broch/quantity[36 "km/h"] (b/kilometers-per-hour (b/meters-per-second 10))))
     (is (= (b/kilograms-per-square-meter (b/kilograms-per-square-centimeter 10))
-           (b// (b/kilograms 10) (b/square-meters (b/square-centimeters 1)))))))
+           (b// (b/kilograms 10) (b/square-meters (b/square-centimeters 1))))))
+  (testing "finds closest option for composition without an unscaled unit"
+    (assert (not (get @impl/symbol-registry "NM/l"))) ; <- must not exist for this test to be valid
+    (b/defunit nautical-miles-per-cubic-meter :distance-per-volume "NM/m³" {b/nautical-miles 1 b/cubic-meters -1})
+    (is (= "NM/m³" (b/symbol (b// (b/nautical-miles 3) (b/liters 1000)))))
+
+    (assert (not (get @impl/symbol-registry "cm/l"))) ; <- must not exist for this test to be valid
+    (b/defunit centimeters-per-deciliter :distance-per-volume "cm/dl" {b/centimeters 1 b/deciliters -1})
+    (is (= "cm/dl" (b/symbol (b// (b/centimeters 1) (b/liters 10)))))))
 
 (deftest comparison
   (is (= #broch/quantity[1000 "m"] #broch/quantity[1 "km"]))

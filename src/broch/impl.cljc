@@ -160,18 +160,22 @@
        (into {})))
 
 (defn- attempt-derivation [x y op]
-  (let [derived-comp          (derive-comp x y op)
-        unscaled-derived-comp (assoc derived-comp :broch/scaled 1)]
+  (let [comp-reg              @composition-registry
+        derived-comp          (derive-comp x y op)
+        unscaled-derived-comp (dissoc derived-comp :broch/scaled)]
     (cond
       (or (empty? derived-comp) (empty? (dissoc derived-comp :broch/scaled))) (op (number x) (number y))
 
-      (@composition-registry derived-comp)
-      (converting-op (@composition-registry derived-comp) x y op)
+      (comp-reg derived-comp)
+      (converting-op (comp-reg derived-comp) x y op)
 
-      (@composition-registry unscaled-derived-comp)
-      (converting-op (@composition-registry unscaled-derived-comp) x y op)
-
-      :else (throw (ex-info (str "No unit is registered for " derived-comp) derived-comp)))))
+      :else (if-let [closest-option (some->> comp-reg
+                                             (filter (fn [[comp _]] (= unscaled-derived-comp (dissoc comp :broch/scaled))))
+                                             (not-empty)
+                                             (apply min-key (fn [[comp _]] (abs (clojure.core/- (:broch/scaled comp) (:broch/scaled derived-comp)))))
+                                             (second))]
+              (converting-op closest-option x y op)
+              (throw (ex-info (str "No unit is registered for " derived-comp) derived-comp))))))
 
 (defn- unitless-quantity [number]
   (reify IQuantity
