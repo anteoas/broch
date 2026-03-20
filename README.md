@@ -17,7 +17,7 @@ Named after [Ole Jacob Broch](https://en.wikipedia.org/wiki/Ole_Jacob_Broch)
 for his contributions as director of the 
 [International Bureau of Weights and Measures](https://en.wikipedia.org/wiki/International_Bureau_of_Weights_and_Measures). 
 
-![](https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Ole_Jacob_Broch.png/375px-Ole_Jacob_Broch.png)
+![](https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Ole_Jacob_Broch.png/500px-Ole_Jacob_Broch.png)
 
 ## Names
 There is some disagreement on what to name things in this space, but we've settled on these definitions:
